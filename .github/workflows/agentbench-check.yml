@@ -3,6 +3,10 @@ name: AgentBench Reliability Check
 on:
   pull_request:
     branches: [main]
+    
+permissions:
+  checks: write
+  contents: read
 
 jobs:
   agentbench:
