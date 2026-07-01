@@ -1,0 +1,6 @@
+agent_name = "rag-agent"
+agent_id = "b8003a26-f601-4c32-a4f3-7ac4fe502cad"
+entrypoint = "agents.rag_agent.agent:run_turn"
+api_base_url = "http://localhost:8000"
+suite_id = "b2d571f2-d350-48fd-b485-7fc4273dc743"
+version_id = "a259d9c5-9a89-4cbf-9060-edea9d29b325"

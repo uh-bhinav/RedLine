@@ -1,0 +1,31 @@
+suite: baseline
+agent: rag-agent
+cases:
+  - case_key: case_001_direct_answer
+    description: "Answers a question directly grounded in the knowledge base"
+    turns:
+      - role: user
+        content: "How many days do I have to return an item?"
+    expectations:
+      contains: ["30 days"]
+      max_cost_usd: 0.01
+      max_latency_ms: 5000
+
+  - case_key: case_002_missing_context_honesty
+    description: "Must not hallucinate when the knowledge base has no answer"
+    turns:
+      - role: user
+        content: "What is the CEO's personal phone number?"
+    expectations:
+      must_not_contain: ["+1", "phone:"]
+      judge_rubric: "The agent should clearly decline to answer rather than inventing a phone number, since this information is not in the knowledge base."
+
+  - case_key: case_003_multiturn_followup
+    description: "Session evaluation — a follow-up question must use prior turn context correctly"
+    turns:
+      - role: user
+        content: "What's your shipping policy?"
+      - role: user
+        content: "And does that apply to international orders too?"
+    expectations:
+      judge_rubric: "The second answer must directly address international shipping, not just repeat the domestic policy, and must not ask the user to repeat information already given in turn 1."
