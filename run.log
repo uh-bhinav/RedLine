@@ -1,0 +1,451 @@
+agentbench	Set up job	﻿2026-07-01T08:39:16.6518367Z Current runner version: '2.335.1'
+agentbench	Set up job	2026-07-01T08:39:16.6545287Z ##[group]Runner Image Provisioner
+agentbench	Set up job	2026-07-01T08:39:16.6546305Z Hosted Compute Agent
+agentbench	Set up job	2026-07-01T08:39:16.6546960Z Version: 20260624.560
+agentbench	Set up job	2026-07-01T08:39:16.6547748Z Commit: 925d229a51159bc391ae97e54a2dd1fe20af789d
+agentbench	Set up job	2026-07-01T08:39:16.6548559Z Build Date: 2026-06-24T18:26:47Z
+agentbench	Set up job	2026-07-01T08:39:16.6549649Z Worker ID: {3970c732-9ce3-4db1-97fa-fee76ee95091}
+agentbench	Set up job	2026-07-01T08:39:16.6550552Z Azure Region: eastus2
+agentbench	Set up job	2026-07-01T08:39:16.6551425Z ##[endgroup]
+agentbench	Set up job	2026-07-01T08:39:16.6554082Z ##[group]Operating System
+agentbench	Set up job	2026-07-01T08:39:16.6555234Z Ubuntu
+agentbench	Set up job	2026-07-01T08:39:16.6556131Z 24.04.4
+agentbench	Set up job	2026-07-01T08:39:16.6557169Z LTS
+agentbench	Set up job	2026-07-01T08:39:16.6558047Z ##[endgroup]
+agentbench	Set up job	2026-07-01T08:39:16.6559055Z ##[group]Runner Image
+agentbench	Set up job	2026-07-01T08:39:16.6560485Z Image: ubuntu-24.04
+agentbench	Set up job	2026-07-01T08:39:16.6561424Z Version: 20260628.225.1
+agentbench	Set up job	2026-07-01T08:39:16.6563254Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260628.225/images/ubuntu/Ubuntu2404-Readme.md
+agentbench	Set up job	2026-07-01T08:39:16.6566017Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260628.225
+agentbench	Set up job	2026-07-01T08:39:16.6567580Z ##[endgroup]
+agentbench	Set up job	2026-07-01T08:39:16.6569876Z ##[group]GITHUB_TOKEN Permissions
+agentbench	Set up job	2026-07-01T08:39:16.6572538Z Checks: write
+agentbench	Set up job	2026-07-01T08:39:16.6573545Z Contents: read
+agentbench	Set up job	2026-07-01T08:39:16.6574576Z Metadata: read
+agentbench	Set up job	2026-07-01T08:39:16.6575365Z ##[endgroup]
+agentbench	Set up job	2026-07-01T08:39:16.6578480Z Secret source: Actions
+agentbench	Set up job	2026-07-01T08:39:16.6579829Z Prepare workflow directory
+agentbench	Set up job	2026-07-01T08:39:16.7291333Z Prepare all required actions
+agentbench	Set up job	2026-07-01T08:39:16.7344547Z Getting action download info
+agentbench	Set up job	2026-07-01T08:39:16.9147067Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+agentbench	Set up job	2026-07-01T08:39:16.9873376Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+agentbench	Set up job	2026-07-01T08:39:17.1571253Z Complete job name: agentbench
+agentbench	Run actions/checkout@v4	﻿2026-07-01T08:39:17.2253452Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2263000Z ##[group]Run actions/checkout@v4
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2263761Z with:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2264230Z   repository: uh-bhinav/RedLine
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2268683Z   token: ***
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2269146Z   ssh-strict: true
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2269888Z   ssh-user: git
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2270355Z   persist-credentials: true
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2270866Z   clean: true
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2271338Z   sparse-checkout-cone-mode: true
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2271899Z   fetch-depth: 1
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2272352Z   fetch-tags: false
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2272819Z   show-progress: true
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2273284Z   lfs: false
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2273731Z   submodules: false
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2274244Z   set-safe-directory: true
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2274967Z env:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2279302Z   GITHUB_TOKEN: ***
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2279989Z   GITHUB_SHA: 8567e7e7741a880ac6a65fa71cfde51789efd9b8
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2280652Z   GITHUB_REPOSITORY: uh-bhinav/RedLine
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2281213Z   PR_NUMBER: 2
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2281867Z   REDLINE_API_KEY: ***
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2282481Z   REDLINE_BASE_URL: ***
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2283115Z   GEMINI_API_KEY: ***
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.2283584Z ##[endgroup]
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3253188Z Syncing repository: uh-bhinav/RedLine
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3255053Z ##[group]Getting Git version info
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3255835Z Working directory is '/home/runner/work/RedLine/RedLine'
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3256863Z [command]/usr/bin/git version
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3314364Z git version 2.54.0
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3340484Z ##[endgroup]
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3346992Z Temporarily overriding HOME='/home/runner/work/_temp/2310b408-aea2-4ecf-9234-e7a791f03521' before making global git config changes
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3349093Z Adding repository directory to the temporary git global config as a safe directory
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3353200Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RedLine/RedLine
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3397338Z Deleting the contents of '/home/runner/work/RedLine/RedLine'
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3401655Z ##[group]Initializing the repository
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3405918Z [command]/usr/bin/git init /home/runner/work/RedLine/RedLine
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3493936Z hint: Using 'master' as the name for the initial branch. This default branch name
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3495342Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3496314Z hint: to use in all of your new repositories, which will suppress this warning,
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3497072Z hint: call:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3497723Z hint:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3498532Z hint: 	git config --global init.defaultBranch <name>
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3499697Z hint:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3500664Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3502103Z hint: 'development'. The just-created branch can be renamed via this command:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3503249Z hint:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3503701Z hint: 	git branch -m <name>
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3504213Z hint:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3504867Z hint: Disable this message with "git config set advice.defaultBranchName false"
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3506082Z Initialized empty Git repository in /home/runner/work/RedLine/RedLine/.git/
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3510910Z [command]/usr/bin/git remote add origin https://github.com/uh-bhinav/RedLine
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3586801Z ##[endgroup]
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3587730Z ##[group]Disabling automatic garbage collection
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3591843Z [command]/usr/bin/git config --local gc.auto 0
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3622802Z ##[endgroup]
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3624020Z ##[group]Setting up auth
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3629717Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.3664816Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.4002495Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.4032724Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.4262623Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.4294190Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.4528707Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.4563173Z ##[endgroup]
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.4564236Z ##[group]Fetching the repository
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.4572371Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +8567e7e7741a880ac6a65fa71cfde51789efd9b8:refs/remotes/pull/2/merge
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6650999Z From https://github.com/uh-bhinav/RedLine
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6652479Z  * [new ref]         8567e7e7741a880ac6a65fa71cfde51789efd9b8 -> pull/2/merge
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6690367Z ##[endgroup]
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6691851Z ##[group]Determining the checkout info
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6693628Z ##[endgroup]
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6700255Z [command]/usr/bin/git sparse-checkout disable
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6748973Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6778146Z ##[group]Checking out the ref
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6781789Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/2/merge
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6868166Z Note: switching to 'refs/remotes/pull/2/merge'.
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6869677Z 
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6870942Z You are in 'detached HEAD' state. You can look around, make experimental
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6873082Z changes and commit them, and you can discard any commits you make in this
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6875238Z state without impacting any branches by switching back to a branch.
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6876653Z 
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6877552Z If you want to create a new branch to retain commits you create, you may
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6879768Z do so (now or later) by using -c with the switch command. Example:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6881038Z 
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6881603Z   git switch -c <new-branch-name>
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6882464Z 
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6883031Z Or undo this operation with:
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6884172Z 
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6884701Z   git switch -
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6885643Z 
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6886643Z Turn off this advice by setting config variable advice.detachedHead to false
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6888141Z 
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6889911Z HEAD is now at 8567e7e Merge 250ce9741cdc87bb6adead1d9201871f5e8ba479 into 0bd9f737d9a160b176247e424a55a5cadf58539a
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6897896Z ##[endgroup]
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6916327Z [command]/usr/bin/git log -1 --format=%H
+agentbench	Run actions/checkout@v4	2026-07-01T08:39:17.6942448Z 8567e7e7741a880ac6a65fa71cfde51789efd9b8
+agentbench	Run actions/setup-python@v5	﻿2026-07-01T08:39:17.7355191Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7358276Z ##[group]Run actions/setup-python@v5
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7358973Z with:
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7359866Z   python-version: 3.10
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7360470Z   cache: pip
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7361030Z   check-latest: false
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7365932Z   token: ***
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7366555Z   update-environment: true
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7367210Z   allow-prereleases: false
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7367862Z   freethreaded: false
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7368457Z env:
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7373450Z   GITHUB_TOKEN: ***
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7374135Z   GITHUB_SHA: 8567e7e7741a880ac6a65fa71cfde51789efd9b8
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7374966Z   GITHUB_REPOSITORY: uh-bhinav/RedLine
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7375693Z   PR_NUMBER: 2
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7376471Z   REDLINE_API_KEY: ***
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7377208Z   REDLINE_BASE_URL: ***
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7377955Z   GEMINI_API_KEY: ***
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.7378540Z ##[endgroup]
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.8726914Z ##[group]Installed versions
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.8879806Z (node:2283) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.8882058Z Successfully set up CPython (3.10.20)
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.8883786Z ##[endgroup]
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.8885428Z (Use `node --trace-deprecation ...` to show where the warning was created)
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:17.9682064Z [command]/opt/hostedtoolcache/Python/3.10.20/x64/bin/pip cache dir
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:19.4226255Z /home/runner/.cache/pip
+agentbench	Run actions/setup-python@v5	2026-07-01T08:39:19.5211253Z pip cache is not found
+agentbench	Install dependencies	﻿2026-07-01T08:39:19.5356521Z ##[group]Run pip install -r apps/api/requirements.txt typer==0.9.4 click==8.1.8 rich==13.7.1 tomli==2.0.1 tomli-w==1.0.0 "httpx>=0.28.1,<1.0.0" pyyaml==6.0.2
+agentbench	Install dependencies	2026-07-01T08:39:19.5357654Z ^[[36;1mpip install -r apps/api/requirements.txt typer==0.9.4 click==8.1.8 rich==13.7.1 tomli==2.0.1 tomli-w==1.0.0 "httpx>=0.28.1,<1.0.0" pyyaml==6.0.2^[[0m
+agentbench	Install dependencies	2026-07-01T08:39:19.5521735Z shell: /usr/bin/bash -e {0}
+agentbench	Install dependencies	2026-07-01T08:39:19.5522163Z env:
+agentbench	Install dependencies	2026-07-01T08:39:19.5525569Z   GITHUB_TOKEN: ***
+agentbench	Install dependencies	2026-07-01T08:39:19.5525946Z   GITHUB_SHA: 8567e7e7741a880ac6a65fa71cfde51789efd9b8
+agentbench	Install dependencies	2026-07-01T08:39:19.5526350Z   GITHUB_REPOSITORY: uh-bhinav/RedLine
+agentbench	Install dependencies	2026-07-01T08:39:19.5526685Z   PR_NUMBER: 2
+agentbench	Install dependencies	2026-07-01T08:39:19.5527102Z   REDLINE_API_KEY: ***
+agentbench	Install dependencies	2026-07-01T08:39:19.5527521Z   REDLINE_BASE_URL: ***
+agentbench	Install dependencies	2026-07-01T08:39:19.5527971Z   GEMINI_API_KEY: ***
+agentbench	Install dependencies	2026-07-01T08:39:19.5528331Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	Install dependencies	2026-07-01T08:39:19.5529147Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib/pkgconfig
+agentbench	Install dependencies	2026-07-01T08:39:19.5530002Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	Install dependencies	2026-07-01T08:39:19.5530451Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	Install dependencies	2026-07-01T08:39:19.5530894Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	Install dependencies	2026-07-01T08:39:19.5531335Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib
+agentbench	Install dependencies	2026-07-01T08:39:19.5531722Z ##[endgroup]
+agentbench	Install dependencies	2026-07-01T08:39:20.5984311Z Collecting typer==0.9.4
+agentbench	Install dependencies	2026-07-01T08:39:20.6664148Z   Downloading typer-0.9.4-py3-none-any.whl.metadata (14 kB)
+agentbench	Install dependencies	2026-07-01T08:39:20.6916343Z Collecting click==8.1.8
+agentbench	Install dependencies	2026-07-01T08:39:20.6985955Z   Downloading click-8.1.8-py3-none-any.whl.metadata (2.3 kB)
+agentbench	Install dependencies	2026-07-01T08:39:20.7357235Z Collecting rich==13.7.1
+agentbench	Install dependencies	2026-07-01T08:39:20.7428286Z   Downloading rich-13.7.1-py3-none-any.whl.metadata (18 kB)
+agentbench	Install dependencies	2026-07-01T08:39:20.7712080Z Collecting tomli==2.0.1
+agentbench	Install dependencies	2026-07-01T08:39:20.7780540Z   Downloading tomli-2.0.1-py3-none-any.whl.metadata (8.9 kB)
+agentbench	Install dependencies	2026-07-01T08:39:20.7916963Z Collecting tomli-w==1.0.0
+agentbench	Install dependencies	2026-07-01T08:39:20.7992612Z   Downloading tomli_w-1.0.0-py3-none-any.whl.metadata (4.9 kB)
+agentbench	Install dependencies	2026-07-01T08:39:20.8200938Z Collecting httpx<1.0.0,>=0.28.1
+agentbench	Install dependencies	2026-07-01T08:39:20.8270857Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+agentbench	Install dependencies	2026-07-01T08:39:20.8677710Z Collecting pyyaml==6.0.2
+agentbench	Install dependencies	2026-07-01T08:39:20.8749928Z   Downloading PyYAML-6.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+agentbench	Install dependencies	2026-07-01T08:39:20.9146366Z Collecting fastapi==0.115.6 (from -r apps/api/requirements.txt (line 1))
+agentbench	Install dependencies	2026-07-01T08:39:20.9216686Z   Downloading fastapi-0.115.6-py3-none-any.whl.metadata (27 kB)
+agentbench	Install dependencies	2026-07-01T08:39:20.9506099Z Collecting uvicorn==0.32.1 (from uvicorn[standard]==0.32.1->-r apps/api/requirements.txt (line 2))
+agentbench	Install dependencies	2026-07-01T08:39:20.9581971Z   Downloading uvicorn-0.32.1-py3-none-any.whl.metadata (6.6 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.2580861Z Collecting sqlalchemy==2.0.36 (from -r apps/api/requirements.txt (line 3))
+agentbench	Install dependencies	2026-07-01T08:39:21.2669976Z   Downloading SQLAlchemy-2.0.36-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.7 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.3380336Z Collecting psycopg2-binary==2.9.10 (from -r apps/api/requirements.txt (line 4))
+agentbench	Install dependencies	2026-07-01T08:39:21.3455993Z   Downloading psycopg2_binary-2.9.10-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.3668705Z Collecting alembic==1.14.0 (from -r apps/api/requirements.txt (line 5))
+agentbench	Install dependencies	2026-07-01T08:39:21.3737351Z   Downloading alembic-1.14.0-py3-none-any.whl.metadata (7.4 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.4794118Z Collecting pydantic==2.12.5 (from -r apps/api/requirements.txt (line 7))
+agentbench	Install dependencies	2026-07-01T08:39:21.4868106Z   Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.5125816Z Collecting pydantic-settings==2.10.1 (from -r apps/api/requirements.txt (line 8))
+agentbench	Install dependencies	2026-07-01T08:39:21.5194554Z   Downloading pydantic_settings-2.10.1-py3-none-any.whl.metadata (3.4 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.5351190Z Collecting python-jose==3.3.0 (from python-jose[cryptography]==3.3.0->-r apps/api/requirements.txt (line 10))
+agentbench	Install dependencies	2026-07-01T08:39:21.5423759Z   Downloading python_jose-3.3.0-py2.py3-none-any.whl.metadata (5.4 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.5581460Z Collecting passlib==1.7.4 (from passlib[bcrypt]==1.7.4->-r apps/api/requirements.txt (line 11))
+agentbench	Install dependencies	2026-07-01T08:39:21.5651819Z   Downloading passlib-1.7.4-py2.py3-none-any.whl.metadata (1.7 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.5946466Z Collecting pytest==8.3.4 (from -r apps/api/requirements.txt (line 13))
+agentbench	Install dependencies	2026-07-01T08:39:21.6016812Z   Downloading pytest-8.3.4-py3-none-any.whl.metadata (7.5 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.6258752Z Collecting google-genai==2.10.0 (from -r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:21.6328147Z   Downloading google_genai-2.10.0-py3-none-any.whl.metadata (53 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.8504091Z Collecting numpy==2.2.6 (from -r apps/api/requirements.txt (line 16))
+agentbench	Install dependencies	2026-07-01T08:39:21.8579150Z   Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.8832591Z Collecting typing-extensions>=3.7.4.3 (from typer==0.9.4)
+agentbench	Install dependencies	2026-07-01T08:39:21.8911852Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.9098351Z Collecting markdown-it-py>=2.2.0 (from rich==13.7.1)
+agentbench	Install dependencies	2026-07-01T08:39:21.9169896Z   Downloading markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.9408975Z Collecting pygments<3.0.0,>=2.13.0 (from rich==13.7.1)
+agentbench	Install dependencies	2026-07-01T08:39:21.9479927Z   Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+agentbench	Install dependencies	2026-07-01T08:39:21.9758940Z Collecting starlette<0.42.0,>=0.40.0 (from fastapi==0.115.6->-r apps/api/requirements.txt (line 1))
+agentbench	Install dependencies	2026-07-01T08:39:21.9831527Z   Downloading starlette-0.41.3-py3-none-any.whl.metadata (6.0 kB)
+agentbench	Install dependencies	2026-07-01T08:39:22.0035167Z Collecting annotated-types>=0.6.0 (from pydantic==2.12.5->-r apps/api/requirements.txt (line 7))
+agentbench	Install dependencies	2026-07-01T08:39:22.0106482Z   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+agentbench	Install dependencies	2026-07-01T08:39:22.6964719Z Collecting pydantic-core==2.41.5 (from pydantic==2.12.5->-r apps/api/requirements.txt (line 7))
+agentbench	Install dependencies	2026-07-01T08:39:22.7058555Z   Downloading pydantic_core-2.41.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+agentbench	Install dependencies	2026-07-01T08:39:22.7214896Z Collecting typing-inspection>=0.4.2 (from pydantic==2.12.5->-r apps/api/requirements.txt (line 7))
+agentbench	Install dependencies	2026-07-01T08:39:22.7287645Z   Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+agentbench	Install dependencies	2026-07-01T08:39:22.7457919Z Collecting h11>=0.8 (from uvicorn==0.32.1->uvicorn[standard]==0.32.1->-r apps/api/requirements.txt (line 2))
+agentbench	Install dependencies	2026-07-01T08:39:22.7531324Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+agentbench	Install dependencies	2026-07-01T08:39:22.9269902Z Collecting greenlet!=0.4.17 (from sqlalchemy==2.0.36->-r apps/api/requirements.txt (line 3))
+agentbench	Install dependencies	2026-07-01T08:39:22.9344040Z   Downloading greenlet-3.5.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+agentbench	Install dependencies	2026-07-01T08:39:22.9579608Z Collecting Mako (from alembic==1.14.0->-r apps/api/requirements.txt (line 5))
+agentbench	Install dependencies	2026-07-01T08:39:22.9652858Z   Downloading mako-1.3.12-py3-none-any.whl.metadata (2.9 kB)
+agentbench	Install dependencies	2026-07-01T08:39:22.9880319Z Collecting python-dotenv>=0.21.0 (from pydantic-settings==2.10.1->-r apps/api/requirements.txt (line 8))
+agentbench	Install dependencies	2026-07-01T08:39:22.9950996Z   Downloading python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.0130174Z Collecting ecdsa!=0.15 (from python-jose==3.3.0->python-jose[cryptography]==3.3.0->-r apps/api/requirements.txt (line 10))
+agentbench	Install dependencies	2026-07-01T08:39:23.0206142Z   Downloading ecdsa-0.19.2-py2.py3-none-any.whl.metadata (29 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.0382189Z Collecting rsa (from python-jose==3.3.0->python-jose[cryptography]==3.3.0->-r apps/api/requirements.txt (line 10))
+agentbench	Install dependencies	2026-07-01T08:39:23.0454045Z   Downloading rsa-4.9.1-py3-none-any.whl.metadata (5.6 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.0694485Z Collecting pyasn1 (from python-jose==3.3.0->python-jose[cryptography]==3.3.0->-r apps/api/requirements.txt (line 10))
+agentbench	Install dependencies	2026-07-01T08:39:23.0767960Z   Downloading pyasn1-0.6.3-py3-none-any.whl.metadata (8.4 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.1028799Z Collecting exceptiongroup>=1.0.0rc8 (from pytest==8.3.4->-r apps/api/requirements.txt (line 13))
+agentbench	Install dependencies	2026-07-01T08:39:23.1098369Z   Downloading exceptiongroup-1.3.1-py3-none-any.whl.metadata (6.7 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.1245812Z Collecting iniconfig (from pytest==8.3.4->-r apps/api/requirements.txt (line 13))
+agentbench	Install dependencies	2026-07-01T08:39:23.1325513Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.1537809Z Collecting packaging (from pytest==8.3.4->-r apps/api/requirements.txt (line 13))
+agentbench	Install dependencies	2026-07-01T08:39:23.1611755Z   Downloading packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.1763983Z Collecting pluggy<2,>=1.5 (from pytest==8.3.4->-r apps/api/requirements.txt (line 13))
+agentbench	Install dependencies	2026-07-01T08:39:23.1835882Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.2057200Z Collecting anyio<5.0.0,>=4.8.0 (from google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:23.2126456Z   Downloading anyio-4.14.1-py3-none-any.whl.metadata (4.6 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.2455886Z Collecting google-auth<3.0.0,>=2.48.1 (from google-auth[requests]<3.0.0,>=2.48.1->google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:23.2528927Z   Downloading google_auth-2.55.1-py3-none-any.whl.metadata (5.1 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.2884408Z Collecting requests<3.0.0,>=2.28.1 (from google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:23.2955342Z   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.3141093Z Collecting tenacity<9.2.0,>=8.2.3 (from google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:23.3212208Z   Downloading tenacity-9.1.4-py3-none-any.whl.metadata (1.2 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.4070656Z Collecting websockets<17.0,>=13.0.0 (from google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:23.4150486Z   Downloading websockets-16.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.4312073Z Collecting distro<2,>=1.7.0 (from google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:23.4381946Z   Downloading distro-1.9.0-py3-none-any.whl.metadata (6.8 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.4511114Z Collecting sniffio (from google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:23.4579182Z   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.5010755Z Collecting bcrypt>=3.1.0 (from passlib[bcrypt]==1.7.4->-r apps/api/requirements.txt (line 11))
+agentbench	Install dependencies	2026-07-01T08:39:23.5083070Z   Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl.metadata (10 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.7321528Z Collecting cryptography>=3.4.0 (from python-jose[cryptography]==3.3.0->-r apps/api/requirements.txt (line 10))
+agentbench	Install dependencies	2026-07-01T08:39:23.7398718Z   Downloading cryptography-49.0.0-cp39-abi3-manylinux_2_34_x86_64.whl.metadata (4.3 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.7753339Z Collecting httptools>=0.6.3 (from uvicorn[standard]==0.32.1->-r apps/api/requirements.txt (line 2))
+agentbench	Install dependencies	2026-07-01T08:39:23.7825400Z   Downloading httptools-0.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.8244983Z Collecting uvloop!=0.15.0,!=0.15.1,>=0.14.0 (from uvicorn[standard]==0.32.1->-r apps/api/requirements.txt (line 2))
+agentbench	Install dependencies	2026-07-01T08:39:23.8317702Z   Downloading uvloop-0.22.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.9104487Z Collecting watchfiles>=0.13 (from uvicorn[standard]==0.32.1->-r apps/api/requirements.txt (line 2))
+agentbench	Install dependencies	2026-07-01T08:39:23.9178938Z   Downloading watchfiles-1.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.9429150Z Collecting certifi (from httpx<1.0.0,>=0.28.1)
+agentbench	Install dependencies	2026-07-01T08:39:23.9498446Z   Downloading certifi-2026.6.17-py3-none-any.whl.metadata (2.5 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.9678810Z Collecting httpcore==1.* (from httpx<1.0.0,>=0.28.1)
+agentbench	Install dependencies	2026-07-01T08:39:23.9748048Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+agentbench	Install dependencies	2026-07-01T08:39:23.9928953Z Collecting idna (from httpx<1.0.0,>=0.28.1)
+agentbench	Install dependencies	2026-07-01T08:39:23.9998966Z   Downloading idna-3.18-py3-none-any.whl.metadata (6.1 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.0294858Z Collecting pyasn1-modules>=0.2.1 (from google-auth<3.0.0,>=2.48.1->google-auth[requests]<3.0.0,>=2.48.1->google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:24.0364293Z   Downloading pyasn1_modules-0.4.2-py3-none-any.whl.metadata (3.5 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.1512922Z Collecting charset_normalizer<4,>=2 (from requests<3.0.0,>=2.28.1->google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:24.1587369Z   Downloading charset_normalizer-3.4.7-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.1867887Z Collecting urllib3<3,>=1.26 (from requests<3.0.0,>=2.28.1->google-genai==2.10.0->-r apps/api/requirements.txt (line 15))
+agentbench	Install dependencies	2026-07-01T08:39:24.1938579Z   Downloading urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.3580758Z Collecting cffi>=2.0.0 (from cryptography>=3.4.0->python-jose[cryptography]==3.3.0->-r apps/api/requirements.txt (line 10))
+agentbench	Install dependencies	2026-07-01T08:39:24.3656551Z   Downloading cffi-2.0.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.3828946Z Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->python-jose[cryptography]==3.3.0->-r apps/api/requirements.txt (line 10))
+agentbench	Install dependencies	2026-07-01T08:39:24.3898690Z   Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.4065025Z Collecting six>=1.9.0 (from ecdsa!=0.15->python-jose==3.3.0->python-jose[cryptography]==3.3.0->-r apps/api/requirements.txt (line 10))
+agentbench	Install dependencies	2026-07-01T08:39:24.4134133Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.4302350Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich==13.7.1)
+agentbench	Install dependencies	2026-07-01T08:39:24.4371005Z   Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.5018351Z Collecting MarkupSafe>=0.9.2 (from Mako->alembic==1.14.0->-r apps/api/requirements.txt (line 5))
+agentbench	Install dependencies	2026-07-01T08:39:24.5092531Z   Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.5257438Z Downloading typer-0.9.4-py3-none-any.whl (45 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.5346923Z Downloading click-8.1.8-py3-none-any.whl (98 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.5438162Z Downloading rich-13.7.1-py3-none-any.whl (240 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.5626322Z Downloading tomli-2.0.1-py3-none-any.whl (12 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.5728714Z Downloading tomli_w-1.0.0-py3-none-any.whl (6.0 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.5823594Z Downloading PyYAML-6.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (751 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.5985532Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 751.2/751.2 kB 56.2 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:24.6055158Z Downloading fastapi-0.115.6-py3-none-any.whl (94 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.6151952Z Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.6252674Z Downloading uvicorn-0.32.1-py3-none-any.whl (63 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.6352740Z Downloading SQLAlchemy-2.0.36-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.1 MB)
+agentbench	Install dependencies	2026-07-01T08:39:24.6563710Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.1/3.1 MB 153.5 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:24.6637961Z Downloading psycopg2_binary-2.9.10-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.0 MB)
+agentbench	Install dependencies	2026-07-01T08:39:24.6864064Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.0/3.0 MB 138.7 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:24.6935632Z Downloading alembic-1.14.0-py3-none-any.whl (233 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.7034640Z Downloading pydantic_settings-2.10.1-py3-none-any.whl (45 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.7134193Z Downloading python_jose-3.3.0-py2.py3-none-any.whl (33 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.7223804Z Downloading passlib-1.7.4-py2.py3-none-any.whl (525 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.7271530Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 525.6/525.6 kB 105.4 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:24.7343670Z Downloading pytest-8.3.4-py3-none-any.whl (343 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.7444411Z Downloading google_genai-2.10.0-py3-none-any.whl (957 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.7501121Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 958.0/958.0 kB 202.8 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:24.7574761Z Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.8 MB)
+agentbench	Install dependencies	2026-07-01T08:39:24.8135198Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.8/16.8 MB 311.2 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:24.8211383Z Downloading pydantic_core-2.41.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+agentbench	Install dependencies	2026-07-01T08:39:24.8330112Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 207.7 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:24.8399735Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.8493309Z Downloading anyio-4.14.1-py3-none-any.whl (124 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.8589270Z Downloading distro-1.9.0-py3-none-any.whl (20 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.8678290Z Downloading google_auth-2.55.1-py3-none-any.whl (252 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.8772343Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.8863551Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.8953275Z Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9025076Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 223.7 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:24.9098912Z Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9200001Z Downloading charset_normalizer-3.4.7-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (216 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9298395Z Downloading idna-3.18-py3-none-any.whl (65 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9393709Z Downloading starlette-0.41.3-py3-none-any.whl (73 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9489569Z Downloading tenacity-9.1.4-py3-none-any.whl (28 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9580052Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9677085Z Downloading urllib3-2.7.0-py3-none-any.whl (131 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9770932Z Downloading websockets-16.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (183 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9879180Z Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+agentbench	Install dependencies	2026-07-01T08:39:24.9976736Z Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl (278 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.0079697Z Downloading certifi-2026.6.17-py3-none-any.whl (133 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.0180856Z Downloading cryptography-49.0.0-cp39-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+agentbench	Install dependencies	2026-07-01T08:39:25.0343429Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 334.6 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:25.0418183Z Downloading cffi-2.0.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (216 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.0513480Z Downloading ecdsa-0.19.2-py2.py3-none-any.whl (150 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.0608282Z Downloading exceptiongroup-1.3.1-py3-none-any.whl (16 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.0698113Z Downloading greenlet-3.5.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (615 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.0751676Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 615.7/615.7 kB 121.7 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:25.0823895Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.0915707Z Downloading httptools-0.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (450 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1033144Z Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1138497Z Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1229045Z Downloading pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1324021Z Downloading pyasn1-0.6.3-py3-none-any.whl (83 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1415852Z Downloading python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1507226Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1595263Z Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1687457Z Downloading uvloop-0.22.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.7 MB)
+agentbench	Install dependencies	2026-07-01T08:39:25.1936756Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.7/3.7 MB 164.1 MB/s  0:00:00
+agentbench	Install dependencies	2026-07-01T08:39:25.2012568Z Downloading watchfiles-1.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (457 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.2137123Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.2226903Z Downloading mako-1.3.12-py3-none-any.whl (78 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.2372521Z Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.2464504Z Downloading packaging-26.2-py3-none-any.whl (100 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.2671577Z Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.2762139Z Downloading rsa-4.9.1-py3-none-any.whl (34 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.2855101Z Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+agentbench	Install dependencies	2026-07-01T08:39:25.5430191Z Installing collected packages: passlib, websockets, uvloop, urllib3, typing-extensions, tomli-w, tomli, tenacity, sniffio, six, pyyaml, python-dotenv, pygments, pycparser, pyasn1, psycopg2-binary, pluggy, packaging, numpy, mdurl, MarkupSafe, iniconfig, idna, httptools, h11, greenlet, distro, click, charset_normalizer, certifi, bcrypt, annotated-types, uvicorn, typing-inspection, typer, sqlalchemy, rsa, requests, pydantic-core, pyasn1-modules, markdown-it-py, Mako, httpcore, exceptiongroup, ecdsa, cffi, rich, python-jose, pytest, pydantic, cryptography, anyio, alembic, watchfiles, starlette, pydantic-settings, httpx, google-auth, fastapi, google-genai
+agentbench	Install dependencies	2026-07-01T08:39:32.8196937Z 
+agentbench	Install dependencies	2026-07-01T08:39:32.8268053Z Successfully installed Mako-1.3.12 MarkupSafe-3.0.3 alembic-1.14.0 annotated-types-0.7.0 anyio-4.14.1 bcrypt-5.0.0 certifi-2026.6.17 cffi-2.0.0 charset_normalizer-3.4.7 click-8.1.8 cryptography-49.0.0 distro-1.9.0 ecdsa-0.19.2 exceptiongroup-1.3.1 fastapi-0.115.6 google-auth-2.55.1 google-genai-2.10.0 greenlet-3.5.3 h11-0.16.0 httpcore-1.0.9 httptools-0.8.0 httpx-0.28.1 idna-3.18 iniconfig-2.3.0 markdown-it-py-4.2.0 mdurl-0.1.2 numpy-2.2.6 packaging-26.2 passlib-1.7.4 pluggy-1.6.0 psycopg2-binary-2.9.10 pyasn1-0.6.3 pyasn1-modules-0.4.2 pycparser-3.0 pydantic-2.12.5 pydantic-core-2.41.5 pydantic-settings-2.10.1 pygments-2.20.0 pytest-8.3.4 python-dotenv-1.2.2 python-jose-3.3.0 pyyaml-6.0.2 requests-2.34.2 rich-13.7.1 rsa-4.9.1 six-1.17.0 sniffio-1.3.1 sqlalchemy-2.0.36 starlette-0.41.3 tenacity-9.1.4 tomli-2.0.1 tomli-w-1.0.0 typer-0.9.4 typing-extensions-4.15.0 typing-inspection-0.4.2 urllib3-2.7.0 uvicorn-0.32.1 uvloop-0.22.1 watchfiles-1.2.0 websockets-16.0
+agentbench	Write .env for Settings import	﻿2026-07-01T08:39:33.1137133Z ##[group]Run echo "DATABASE_URL=***localhost/placeholder" >> .env
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1137950Z ^[[36;1mecho "DATABASE_URL=***localhost/placeholder" >> .env^[[0m
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1138353Z ^[[36;1mecho "JWT_SECRET_KEY=placeholder" >> .env^[[0m
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1138848Z ^[[36;1mecho "GEMINI_API_KEY=***" >> .env^[[0m
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1175245Z shell: /usr/bin/bash -e {0}
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1175529Z env:
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1178405Z   GITHUB_TOKEN: ***
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1178699Z   GITHUB_SHA: 8567e7e7741a880ac6a65fa71cfde51789efd9b8
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1179050Z   GITHUB_REPOSITORY: uh-bhinav/RedLine
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1179507Z   PR_NUMBER: 2
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1179994Z   REDLINE_API_KEY: ***
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1180414Z   REDLINE_BASE_URL: ***
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1180733Z   GEMINI_API_KEY: ***
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1181038Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1181499Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib/pkgconfig
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1181993Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1182407Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1182805Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1183213Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib
+agentbench	Write .env for Settings import	2026-07-01T08:39:33.1183553Z ##[endgroup]
+agentbench	agentbench login	﻿2026-07-01T08:39:33.1277437Z ##[group]Run python -m apps.cli.main login \
+agentbench	agentbench login	2026-07-01T08:39:33.1277828Z ^[[36;1mpython -m apps.cli.main login \^[[0m
+agentbench	agentbench login	2026-07-01T08:39:33.1278146Z ^[[36;1m  --base-url "$REDLINE_BASE_URL" \^[[0m
+agentbench	agentbench login	2026-07-01T08:39:33.1278466Z ^[[36;1m  --api-key "$REDLINE_API_KEY"^[[0m
+agentbench	agentbench login	2026-07-01T08:39:33.1314347Z shell: /usr/bin/bash -e {0}
+agentbench	agentbench login	2026-07-01T08:39:33.1314632Z env:
+agentbench	agentbench login	2026-07-01T08:39:33.1317557Z   GITHUB_TOKEN: ***
+agentbench	agentbench login	2026-07-01T08:39:33.1317859Z   GITHUB_SHA: 8567e7e7741a880ac6a65fa71cfde51789efd9b8
+agentbench	agentbench login	2026-07-01T08:39:33.1318221Z   GITHUB_REPOSITORY: uh-bhinav/RedLine
+agentbench	agentbench login	2026-07-01T08:39:33.1318509Z   PR_NUMBER: 2
+agentbench	agentbench login	2026-07-01T08:39:33.1318864Z   REDLINE_API_KEY: ***
+agentbench	agentbench login	2026-07-01T08:39:33.1319215Z   REDLINE_BASE_URL: ***
+agentbench	agentbench login	2026-07-01T08:39:33.1319740Z   GEMINI_API_KEY: ***
+agentbench	agentbench login	2026-07-01T08:39:33.1320037Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	agentbench login	2026-07-01T08:39:33.1320691Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib/pkgconfig
+agentbench	agentbench login	2026-07-01T08:39:33.1321129Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	agentbench login	2026-07-01T08:39:33.1321563Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	agentbench login	2026-07-01T08:39:33.1321946Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	agentbench login	2026-07-01T08:39:33.1322340Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib
+agentbench	agentbench login	2026-07-01T08:39:33.1322675Z ##[endgroup]
+agentbench	agentbench login	2026-07-01T08:39:34.1368033Z Logged in. Config saved to ~/.agentbench/config.toml
+agentbench	agentbench ci-check	﻿2026-07-01T08:39:34.1785703Z ##[group]Run python -m apps.cli.main ci-check \
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1786137Z ^[[36;1mpython -m apps.cli.main ci-check \^[[0m
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1786455Z ^[[36;1m  --agent rag-agent \^[[0m
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1786747Z ^[[36;1m  --suite baseline^[[0m
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1822048Z shell: /usr/bin/bash -e {0}
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1822342Z env:
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1825470Z   GITHUB_TOKEN: ***
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1825792Z   GITHUB_SHA: 8567e7e7741a880ac6a65fa71cfde51789efd9b8
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1826149Z   GITHUB_REPOSITORY: uh-bhinav/RedLine
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1826461Z   PR_NUMBER: 2
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1826801Z   REDLINE_API_KEY: ***
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1827138Z   REDLINE_BASE_URL: ***
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1827459Z   GEMINI_API_KEY: ***
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1827758Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1828215Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib/pkgconfig
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1828656Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1829111Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1829731Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.20/x64
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1830133Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.20/x64/lib
+agentbench	agentbench ci-check	2026-07-01T08:39:34.1830486Z ##[endgroup]
+agentbench	agentbench ci-check	2026-07-01T08:39:34.7895148Z Check Run created: id=84490605210
+agentbench	agentbench ci-check	2026-07-01T08:39:36.0661320Z Eval run created: e3a38878-02a6-4e25-9f69-8dfe8f370fb8  poll: 
+agentbench	agentbench ci-check	2026-07-01T08:39:36.0662247Z /eval-runs/e3a38878-02a6-4e25-9f69-8dfe8f370fb8
+agentbench	agentbench ci-check	2026-07-01T08:39:41.6870960Z   status: running...
+agentbench	agentbench ci-check	2026-07-01T08:39:47.6648013Z ##[error]Process completed with exit code 1.
+agentbench	Post Run actions/checkout@v4	﻿2026-07-01T08:39:47.6787364Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.6788545Z Post job cleanup.
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.7627036Z [command]/usr/bin/git version
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.7696388Z git version 2.54.0
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.7731711Z Temporarily overriding HOME='/home/runner/work/_temp/35162a39-5cc0-400e-a1c3-a67932bd7a56' before making global git config changes
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.7732995Z Adding repository directory to the temporary git global config as a safe directory
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.7737011Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RedLine/RedLine
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.7773426Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.7809635Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.8050579Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.8076907Z http.https://github.com/.extraheader
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.8088062Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.8121553Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.8357280Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+agentbench	Post Run actions/checkout@v4	2026-07-01T08:39:47.8388765Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+agentbench	Complete job	﻿2026-07-01T08:39:47.8765472Z Cleaning up orphan processes
+agentbench	Complete job	2026-07-01T08:39:47.9044822Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
