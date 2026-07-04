@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from apps.api.core.db import get_db
-from apps.api.core.jobqueue import PostgresJobQueue
+from apps.api.core.redpanda_queue import RedpandaJobQueue
 from apps.api.core.security import require_api_key
 from apps.api.models import ApiKey, EvalRun
 from apps.api.schemas.ci_check import CiCheckCreate, CiCheckResponse
@@ -38,7 +38,7 @@ def create_ci_check(
     db.commit()
     db.refresh(eval_run)
 
-    queue = PostgresJobQueue(db)
+    queue = RedpandaJobQueue(db)
     queue.publish(api_key.tenant_id, "eval.requested", {"eval_run_id": str(eval_run.id)})
 
     return CiCheckResponse(

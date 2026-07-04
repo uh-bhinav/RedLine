@@ -1,12 +1,10 @@
 """
-Eval Engine (Phase1 roadmap Section 10).
+Eval Engine (Phase1 roadmap Section 10, Phase 2 Section 4 trace instrumentation).
 
-Exposes one entrypoint: run_eval(eval_run_id). Orchestrates a full session-based
-eval run: loads the run + its agent version + suite cases, drives the agent through
-each case's scripted turns via the AgentAdapter contract (this loop is *why* the
-session-shaped data model matters -- a single-response model has no place to put
-this loop), scores the result, writes an EvalCaseResult row per case, then hands
-off to the Gate Engine once every case is done.
+Phase 2 adds non-fatal ClickHouse trace emission at three points in the run
+lifecycle: run_started, turn_completed (per case), and run_completed. These are
+fire-and-forget -- a ClickHouse write failure never affects the eval result or
+the Postgres state. The eval logic itself is unchanged.
 """
 from __future__ import annotations
 
@@ -15,6 +13,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from apps.api.core.clickhouse_client import emit_trace
 from apps.api.core.db import SessionLocal
 from apps.api.models import AgentVersion, EvalCase, EvalCaseResult, EvalRun
 from apps.api.services.adapters.local_python import LocalPythonAdapter
@@ -30,8 +29,7 @@ _SCORERS = [ContainsMatchScorer(), CostScorer(), LatencyScorer(), LLMJudgeScorer
 
 
 def _run_case(adapter: LocalPythonAdapter, case: EvalCase) -> tuple[list[Turn], bool, dict]:
-    """Drives one case through its scripted turns. Fresh session_state per case --
-    each case is an independent conversation, never sharing state with another."""
+    """Drives one case through its scripted turns."""
     session_state: dict = {}
     transcript: list[Turn] = []
 
@@ -85,9 +83,17 @@ def run_eval(eval_run_id: uuid.UUID) -> None:
         eval_run.started_at = datetime.utcnow()
         db.commit()
 
+        # Trace: run started
+        emit_trace(
+            eval_run_id=eval_run.id,
+            tenant_id=eval_run.tenant_id,
+            event_type="run_started",
+            detail=f"suite_id={eval_run.suite_id} agent_version_id={eval_run.agent_version_id}",
+        )
+
         adapter = LocalPythonAdapter(agent_version.entrypoint)
 
-        for case in cases:
+        for i, case in enumerate(cases):
             transcript, overall_passed, scorer_results = _run_case(adapter, case)
             metrics = _compute_metrics(transcript)
 
@@ -102,13 +108,30 @@ def run_eval(eval_run_id: uuid.UUID) -> None:
             db.add(case_result)
             db.commit()
 
+            # Trace: one event per case
+            emit_trace(
+                eval_run_id=eval_run.id,
+                tenant_id=eval_run.tenant_id,
+                event_type="turn_completed",
+                case_key=case.case_key,
+                turn_index=i,
+                latency_ms=metrics["latency_ms"],
+                cost_usd=metrics["cost_usd"],
+                passed=overall_passed,
+                detail=str({k: v["passed"] for k, v in scorer_results.items()}),
+            )
+
         eval_run.status = "completed"
         eval_run.completed_at = datetime.utcnow()
         db.commit()
-        # Gate verdict is intentionally not computed here -- GET /eval-runs/{id}
-        # computes it fresh on every read (gate_engine.evaluate() is cheap and
-        # pure), and the CLI's ci-check command is what actually reports it back
-        # to GitHub. Nothing in this function needs to know GitHub exists.
+
+        # Trace: run completed
+        emit_trace(
+            eval_run_id=eval_run.id,
+            tenant_id=eval_run.tenant_id,
+            event_type="run_completed",
+            detail="status=completed",
+        )
 
     except Exception:
         db.rollback()
@@ -116,6 +139,12 @@ def run_eval(eval_run_id: uuid.UUID) -> None:
         if failed_run is not None:
             failed_run.status = "failed"
             db.commit()
+        emit_trace(
+            eval_run_id=eval_run_id,
+            tenant_id=uuid.uuid4(),  # best-effort -- tenant unknown if run not found
+            event_type="run_completed",
+            detail="status=failed",
+        )
         raise
     finally:
         db.close()

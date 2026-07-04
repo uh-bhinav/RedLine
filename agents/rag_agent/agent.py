@@ -109,7 +109,7 @@ def _ensure_knowledge_base_indexed() -> None:
     if _CHUNKS is not None:
         return
     _CHUNKS = _load_chunks()
-    print(f"Chunks loaded: {len(_CHUNKS)}")
+    # print(f"Chunks loaded: {len(_CHUNKS)}")
     print(_CHUNKS[:3])
     _CHUNK_EMBEDDINGS, _ = _embed([c["text"] for c in _CHUNKS], task_type="RETRIEVAL_DOCUMENT")
 

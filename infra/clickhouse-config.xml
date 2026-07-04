@@ -1,0 +1,19 @@
+<clickhouse>
+    <!-- Cap total server memory usage for local M2 development.
+         Without this ClickHouse will try to use 80% of available RAM.
+         2GB is more than enough for Phase 2's trace volume. -->
+    <max_server_memory_usage>2000000000</max_server_memory_usage>
+
+    <!-- Per-query memory limit -->
+    <!-- <max_memory_usage>1000000000</max_memory_usage> -->
+
+    <!-- Reduce concurrent queries for local dev -->
+    <max_concurrent_queries>20</max_concurrent_queries>
+
+    <!-- Listen on all interfaces so the Python client can reach it from the host -->
+    <listen_host>0.0.0.0</listen_host>
+
+    <!-- Reduce background merge memory pressure -->
+    <!-- <background_pool_size>2</background_pool_size>
+    <background_merges_mutations_concurrency_ratio>1</background_merges_mutations_concurrency_ratio> -->
+</clickhouse>

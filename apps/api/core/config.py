@@ -17,6 +17,19 @@ class Settings(BaseSettings):
 
     github_token: str = ""
 
+    # Phase 2 additions
+    redis_url: str = "redis://localhost:6379/0"
+    redpanda_bootstrap_servers: str = "localhost:19092"
+    topic_eval_requested: str = "eval.requested"
+    topic_eval_completed: str = "eval.completed"
+    topic_trace_emitted: str = "trace.emitted"
+
+    # Phase 2 Section 4
+    clickhouse_host: str = "localhost"
+    clickhouse_port: int = 9000
+    clickhouse_db: str = "redline"
+    clickhouse_user: str = "default"
+    clickhouse_password: str = ""
 
 @lru_cache
 def get_settings() -> Settings:

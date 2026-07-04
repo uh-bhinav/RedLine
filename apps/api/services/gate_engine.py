@@ -8,6 +8,11 @@ GatePolicy, and collects a human-readable reason string for every violated thres
 A run with zero configured GatePolicy rows for its agent defaults to min_pass_rate =
 0.9 (the table's own column default) rather than auto-passing -- a missing policy
 must never silently mean "anything goes."
+
+Section 15 refactor: the threshold comparison logic is now in the pure function
+`_compute_gate_result()`, which unit tests call directly without needing a DB
+connection. `evaluate()` is the DB-backed wrapper that resolves the run's policy
+and delegates to it.
 """
 from __future__ import annotations
 
@@ -26,6 +31,38 @@ class GateResult(BaseModel):
     reasons: list[str]
 
 
+def _compute_gate_result(
+    passed_count: int,
+    total: int,
+    avg_cost_usd: float,
+    avg_latency_ms: float,
+    min_pass_rate: float,
+    max_avg_cost_usd: float | None,
+    max_avg_latency_ms: int | None,
+) -> GateResult:
+    """Pure threshold logic -- no DB, no I/O. Unit-testable in isolation."""
+    if total == 0:
+        return GateResult(passed=False, reasons=["no case results found for this run"])
+
+    pass_rate = passed_count / total
+    reasons: list[str] = []
+
+    if pass_rate < min_pass_rate:
+        reasons.append(
+            f"pass_rate {pass_rate:.2f} is below required minimum {min_pass_rate:.2f}"
+        )
+    if max_avg_cost_usd is not None and avg_cost_usd > max_avg_cost_usd:
+        reasons.append(
+            f"avg_cost_usd ${avg_cost_usd:.6f} exceeds max ${max_avg_cost_usd}"
+        )
+    if max_avg_latency_ms is not None and avg_latency_ms > max_avg_latency_ms:
+        reasons.append(
+            f"avg_latency_ms {avg_latency_ms:.0f}ms exceeds max {max_avg_latency_ms}ms"
+        )
+
+    return GateResult(passed=len(reasons) == 0, reasons=reasons)
+
+
 def evaluate(eval_run_id: uuid.UUID) -> GateResult:
     db = SessionLocal()
     try:
@@ -41,7 +78,6 @@ def evaluate(eval_run_id: uuid.UUID) -> GateResult:
 
         total = len(case_results)
         passed_count = sum(1 for r in case_results if r.passed)
-        pass_rate = passed_count / total
         avg_cost_usd = sum(r.metrics.get("cost_usd", 0.0) for r in case_results) / total
         avg_latency_ms = sum(r.metrics.get("latency_ms", 0) for r in case_results) / total
 
@@ -54,14 +90,14 @@ def evaluate(eval_run_id: uuid.UUID) -> GateResult:
         max_avg_cost_usd = policy.max_avg_cost_usd if policy is not None else None
         max_avg_latency_ms = policy.max_avg_latency_ms if policy is not None else None
 
-        reasons: list[str] = []
-        if pass_rate < min_pass_rate:
-            reasons.append(f"pass_rate {pass_rate:.2f} is below required minimum {min_pass_rate:.2f}")
-        if max_avg_cost_usd is not None and avg_cost_usd > max_avg_cost_usd:
-            reasons.append(f"avg_cost_usd ${avg_cost_usd:.6f} exceeds max ${max_avg_cost_usd}")
-        if max_avg_latency_ms is not None and avg_latency_ms > max_avg_latency_ms:
-            reasons.append(f"avg_latency_ms {avg_latency_ms:.0f}ms exceeds max {max_avg_latency_ms}ms")
-
-        return GateResult(passed=len(reasons) == 0, reasons=reasons)
+        return _compute_gate_result(
+            passed_count=passed_count,
+            total=total,
+            avg_cost_usd=avg_cost_usd,
+            avg_latency_ms=avg_latency_ms,
+            min_pass_rate=min_pass_rate,
+            max_avg_cost_usd=max_avg_cost_usd,
+            max_avg_latency_ms=max_avg_latency_ms,
+        )
     finally:
         db.close()
