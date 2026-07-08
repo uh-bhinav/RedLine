@@ -5,6 +5,7 @@ from apps.api.models.gate import GatePolicy
 from apps.api.models.job import Job
 from apps.api.models.tenant import Tenant
 from apps.api.models.user import User
+from apps.api.models.refresh_token import RefreshToken
 
 __all__ = [
     "Tenant",
@@ -18,4 +19,5 @@ __all__ = [
     "EvalCaseResult",
     "GatePolicy",
     "Job",
+    "RefreshToken",
 ]

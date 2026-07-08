@@ -8,7 +8,9 @@ pydantic==2.12.5
 pydantic-settings==2.10.1
 
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+
+passlib==1.7.4
+bcrypt==4.0.1
 
 pytest==8.3.4
 

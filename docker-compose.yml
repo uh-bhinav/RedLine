@@ -1,4 +1,5 @@
 services:
+  # ─── Infrastructure ──────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: redline_postgres
@@ -84,13 +85,12 @@ services:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: redline_dev
     ports:
-      - "8123:8123"   # HTTP interface (curl-able for quick queries)
-      - "9000:9000"   # native TCP interface (clickhouse-driver)
+      - "8123:8123"
+      - "9000:9000"
     volumes:
       - redline_ch_data:/var/lib/clickhouse
       - redline_ch_logs:/var/log/clickhouse-server
       - ./infra/clickhouse-config.xml:/etc/clickhouse-server/config.d/memory.xml:ro
-      - ./infra/clickhouse-users.xml:/etc/clickhouse-server/users.d/memory.xml:ro
     ulimits:
       nofile:
         soft: 262144
@@ -101,6 +101,107 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  eval_service:
+    build:
+      context: .
+      dockerfile: apps/eval_service/Dockerfile
+    container_name: redline_eval_service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+      REDIS_URL: "redis://redis:6379/0"
+      REDPANDA_BOOTSTRAP_SERVERS: "redpanda:9092"
+      CLICKHOUSE_HOST: "clickhouse"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import socket; s=socket.create_connection((\"localhost\",8001),2)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  agent_service:
+    build:
+      context: .
+      dockerfile: apps/agent_service/Dockerfile
+    container_name: redline_agent_service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+      REDIS_URL: "redis://redis:6379/0"
+      REDPANDA_BOOTSTRAP_SERVERS: "redpanda:9092"
+      CLICKHOUSE_HOST: "clickhouse"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8002:8002"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import socket; s=socket.create_connection((\"localhost\",8002),2)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gate_service:
+    build:
+      context: .
+      dockerfile: apps/gate_service/Dockerfile
+    container_name: redline_gate_service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+      REDIS_URL: "redis://redis:6379/0"
+      REDPANDA_BOOTSTRAP_SERVERS: "redpanda:9092"
+      CLICKHOUSE_HOST: "clickhouse"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    ports:
+      - "8003:8003"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import socket; s=socket.create_connection((\"localhost\",8003),2)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── API Gateway ─────────────────────────────────────────────────────────────
+  gateway:
+    image: nginx:alpine
+    container_name: redline_gateway
+    restart: unless-stopped
+    depends_on:
+      eval_service:
+        condition: service_healthy
+      agent_service:
+        condition: service_healthy
+      gate_service:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./infra/gateway.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   redline_pg_data:
