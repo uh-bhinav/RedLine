@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-service
+  namespace: redline
+  labels:
+    {{- include "redline.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.agentService.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agent-service
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: agent-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: agent-service
+          image: "redline-agent_service:latest"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.agentService.port }}
+          env:
+            {{- include "redline.commonEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.agentService.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.agentService.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.agentService.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10

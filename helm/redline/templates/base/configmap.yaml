@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redline-config
+  namespace: redline
+  labels:
+    {{- include "redline.labels" . | nindent 4 }}
+data:
+  redis-url: {{ .Values.infra.redisUrl | quote }}
+  redpanda-bootstrap-servers: {{ .Values.infra.redpandaBootstrapServers | quote }}
+  clickhouse-host: {{ .Values.infra.clickhouseHost | quote }}
+  clickhouse-port: {{ .Values.infra.clickhousePort | quote }}
+  clickhouse-db: {{ .Values.infra.clickhouseDb | quote }}
+  clickhouse-user: {{ .Values.infra.clickhouseUser | quote }}

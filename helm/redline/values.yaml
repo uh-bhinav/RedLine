@@ -1,0 +1,74 @@
+image:
+  registry: ""
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+infra:
+  databaseUrl: "postgresql+psycopg2://redline:redline_dev_password@host.k3d.internal:5433/redline"
+  redisUrl: "redis://host.k3d.internal:6379/0"
+  redpandaBootstrapServers: "host.k3d.internal:19092"
+  clickhouseHost: "host.k3d.internal"
+  clickhousePort: "9000"
+  clickhouseDb: "redline"
+  clickhouseUser: "default"
+  clickhousePassword: "redline_dev"
+
+evalService:
+  replicaCount: 1
+  port: 8001
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+
+agentService:
+  replicaCount: 1
+  port: 8002
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+gateService:
+  replicaCount: 1
+  port: 8003
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+worker:
+  lagThreshold: "5"
+  minReplicas: 1
+  maxReplicas: 8
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "384Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+gateway:
+  port: 80
+
+secrets:
+  jwtSecretKey: "change_this_to_a_long_random_string"
+  geminiApiKey: ""
+  postgresUser: "redline"
+  postgresPassword: "redline_dev_password"
+  postgresDb: "redline"

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: redline
+description: RedLine Agent Reliability Engineering Platform
+type: application
+version: 0.2.0
+appVersion: "0.2.0"
+keywords:
+  - agent-reliability
+  - eval
+  - mlops
+maintainers:
+  - name: uh-bhinav

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eval-worker
+  namespace: redline
+  labels:
+    {{- include "redline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: eval-worker
+spec:
+  # replicas NOT set here -- KEDA's ScaledObject owns replica count.
+  # Setting replicas here would conflict with KEDA's controller.
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eval-worker
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eval-worker
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: eval-worker
+          image: "redline-eval_service:latest"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Override the CMD from the Dockerfile -- same image as eval_service
+          # but runs the worker process instead of uvicorn.
+          command: ["python", "-m", "apps.api.workers.eval_worker_v2"]
+          env:
+            {{- include "redline.commonEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}

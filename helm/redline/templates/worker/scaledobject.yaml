@@ -1,0 +1,37 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: eval-worker-scaledobject
+  namespace: redline
+  labels:
+    {{- include "redline.labels" . | nindent 4 }}
+  annotations:
+    # Documents why we chose consumer lag over CPU -- ADR-003.
+    redline.io/scaling-rationale: >
+      Workers spend ~95% of their time blocked on LLM API calls (network I/O).
+      CPU utilisation stays below 10% even under heavy load. Scaling on CPU
+      would never trigger additional replicas when the queue is growing.
+      Consumer lag is the actual bottleneck signal.
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eval-worker
+  minReplicaCount: {{ .Values.worker.minReplicas }}
+  maxReplicaCount: {{ .Values.worker.maxReplicas }}
+  # cooldownPeriod: how many seconds KEDA waits before scaling DOWN after
+  # lag drops. Set high (300s) because scaling down a mid-eval worker kills
+  # the in-flight job (the message is re-delivered on restart, but the eval
+  # run must be re-queued). 5 minutes gives jobs time to complete.
+  cooldownPeriod: 300
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: {{ .Values.infra.redpandaBootstrapServers | quote }}
+        consumerGroup: eval-worker
+        topic: eval.requested
+        # Scale up when lag per-partition exceeds this threshold.
+        # lagThreshold=5 means: if 5+ messages are waiting per active replica,
+        # add another replica. Tune based on average eval duration.
+        lagThreshold: {{ .Values.worker.lagThreshold | quote }}
+        offsetResetPolicy: earliest

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eval-service
+  namespace: redline
+  labels:
+    {{- include "redline.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.evalService.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eval-service
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eval-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: eval-service
+          image: "redline-eval_service:latest"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.evalService.port }}
+          env:
+            {{- include "redline.commonEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.evalService.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.evalService.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.evalService.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10

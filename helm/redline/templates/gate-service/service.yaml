@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gate-service
+  namespace: redline
+  labels:
+    {{- include "redline.labels" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: gate-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - port: {{ .Values.gateService.port }}
+      targetPort: {{ .Values.gateService.port }}
