@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.routers import dashboard
 from apps.api.routers import auth
+from apps.api.core.telemetry import setup_metrics
 
 app = FastAPI(
     title="RedLine Gate Service",
@@ -28,6 +29,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+setup_metrics(app, "gate-service")
 
 app.include_router(dashboard.router)
 app.include_router(auth.router)

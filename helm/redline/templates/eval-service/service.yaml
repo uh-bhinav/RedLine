@@ -10,5 +10,6 @@ spec:
     app.kubernetes.io/name: eval-service
     app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
-    - port: {{ .Values.evalService.port }}
+    - name: http
+      port: {{ .Values.evalService.port }}
       targetPort: {{ .Values.evalService.port }}

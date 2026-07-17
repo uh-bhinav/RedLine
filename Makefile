@@ -91,10 +91,39 @@ helm-status:
 	@echo "" && echo "=== ScaledObjects ===" && kubectl get scaledobjects -n $(NAMESPACE) 2>/dev/null || true
 	@echo "" && echo "=== HPA ===" && kubectl get hpa -n $(NAMESPACE) 2>/dev/null || true
 
-deploy: images-build images-import helm-upgrade
+deploy:
+	$(MAKE) images-build
+	$(MAKE) images-import
+	$(MAKE) helm-upgrade
+	kubectl rollout restart deployment/eval-service -n redline
+	kubectl rollout restart deployment/agent-service -n redline
+	kubectl rollout restart deployment/gate-service -n redline
+	kubectl rollout restart deployment/eval-worker -n redline
+	kubectl rollout restart deployment/gateway -n redline
 
 logs:
 	kubectl logs -n $(NAMESPACE) -l app.kubernetes.io/instance=$(HELM_RELEASE) \
 		--all-containers --follow --prefix
 
 teardown: helm-uninstall cluster-down
+
+monitoring-install:
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	helm repo add grafana https://grafana.github.io/helm-charts
+	helm repo update
+	helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+		--namespace monitoring \
+		--create-namespace \
+		--set grafana.adminPassword=redline_admin \
+		--set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+		--wait
+	helm install loki grafana/loki-stack \
+		--namespace monitoring \
+		--set grafana.enabled=false \
+		--wait
+
+monitoring-port-forward:
+	kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80 &
+	kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090 &
+	echo "Grafana: http://localhost:3000 (admin/redline_admin)"
+	echo "Prometheus: http://localhost:9090"

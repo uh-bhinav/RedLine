@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.routers import agent, eval_suites
 from apps.api.routers import auth
+from apps.api.core.telemetry import setup_metrics
 
 app = FastAPI(
     title="RedLine Agent Service",
@@ -27,6 +28,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+setup_metrics(app, "agent-service")
 
 app.include_router(agent.router)
 app.include_router(eval_suites.router)

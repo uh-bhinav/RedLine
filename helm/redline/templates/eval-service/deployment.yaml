@@ -6,7 +6,9 @@ metadata:
   labels:
     {{- include "redline.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.evalService.autoscaling.enabled }}
   replicas: {{ .Values.evalService.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: eval-service
@@ -39,3 +41,5 @@ spec:
               port: {{ .Values.evalService.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
+
+            

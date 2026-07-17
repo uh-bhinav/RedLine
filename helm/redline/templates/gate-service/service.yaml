@@ -10,5 +10,6 @@ spec:
     app.kubernetes.io/name: gate-service
     app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
-    - port: {{ .Values.gateService.port }}
+    - name: http
+      port: {{ .Values.gateService.port }}
       targetPort: {{ .Values.gateService.port }}

@@ -40,3 +40,4 @@ spec:
               port: {{ .Values.gateService.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
+            
