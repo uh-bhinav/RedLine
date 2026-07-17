@@ -6,6 +6,7 @@ from apps.api.models.job import Job
 from apps.api.models.tenant import Tenant
 from apps.api.models.user import User
 from apps.api.models.refresh_token import RefreshToken
+from apps.api.models.drift import DriftAlert, DriftSnapshot
 
 __all__ = [
     "Tenant",
@@ -20,4 +21,6 @@ __all__ = [
     "GatePolicy",
     "Job",
     "RefreshToken",
+    "DriftAlert",
+    "DriftSnapshot",
 ]

@@ -115,7 +115,7 @@ def _setup_tracing(service_name: str):
     return trace.get_tracer(service_name)
 
 
-tracer = None
+tracer = _setup_tracing("redline")  # default tracer for non-service code
 
 
 # ─── FastAPI wiring ───────────────────────────────────────────────────────────
@@ -127,10 +127,6 @@ def setup_metrics(app: FastAPI, service_name: str) -> None:
       - GET /metrics endpoint for Prometheus scraping
     Call once in each service's main.py.
     """
-    global tracer
-
-    if tracer is None:
-        tracer = _setup_tracing(service_name)
 
     @app.middleware("http")
     async def _metrics_middleware(request: Request, call_next):
