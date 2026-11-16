@@ -1,0 +1,33 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: load-worker-scaledobject
+  namespace: redline
+  labels:
+    {{- include "redline.labels" . | nindent 4 }}
+  annotations:
+    redline.io/scaling-rationale: >
+      A load test is a genuinely different resource shape than an eval run
+      (foundational doc §9.3): many concurrent outbound requests for the
+      duration of the run, not one LLM call blocking at a time. minReplicaCount
+      is 0 -- unlike eval-worker, there is no reason to keep a load-worker pod
+      running when no load test is queued.
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: load-worker
+  minReplicaCount: {{ .Values.loadWorker.minReplicas }}
+  maxReplicaCount: {{ .Values.loadWorker.maxReplicas }}
+  # A load test itself can run for minutes; killing a pod mid-run abandons
+  # whatever virtual users it was still simulating. Same cooldown reasoning as
+  # eval-worker, extended slightly since load runs tend to be longer.
+  cooldownPeriod: 300
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: {{ .Values.infra.redpandaBootstrapServers | quote }}
+        consumerGroup: load-worker
+        topic: load.requested
+        lagThreshold: {{ .Values.loadWorker.lagThreshold | quote }}
+        offsetResetPolicy: earliest

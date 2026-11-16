@@ -11,14 +11,16 @@ Usage (from the repo root):
         --agent rag-agent \\
         --entrypoint agents.rag_agent.agent:run_turn \\
         --model gemini-2.5-flash \\
-        --version-label v1
+        --version-label v1 \\
+        --tenant acme-corp
 """
 import argparse
 import hashlib
 import importlib
 
 from apps.api.core.db import SessionLocal
-from apps.api.models import Agent, AgentVersion, Tenant
+from apps.api.models import Agent, AgentVersion
+from apps.api.scripts._tenant import resolve_tenant
 
 
 def _compute_content_hash(entrypoint: str) -> str:
@@ -29,13 +31,12 @@ def _compute_content_hash(entrypoint: str) -> str:
 
 
 def register_agent_version(
-    agent_name: str, entrypoint: str, model_name: str, version_label: str
+    agent_name: str, entrypoint: str, model_name: str, version_label: str,
+    tenant_arg: str | None = None,
 ) -> None:
     db = SessionLocal()
     try:
-        tenant = db.query(Tenant).first()
-        if tenant is None:
-            raise RuntimeError("no tenant found -- run `python -m apps.api.scripts.seed` first")
+        tenant = resolve_tenant(db, tenant_arg)
 
         agent = db.query(Agent).filter(Agent.tenant_id == tenant.id, Agent.name == agent_name).first()
         if agent is None:
@@ -76,5 +77,11 @@ if __name__ == "__main__":
     parser.add_argument("--entrypoint", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--version-label", required=True)
+    parser.add_argument(
+        "--tenant", default=None,
+        help="Tenant name or UUID. Required once more than one tenant exists.",
+    )
     args = parser.parse_args()
-    register_agent_version(args.agent, args.entrypoint, args.model, args.version_label)
+    register_agent_version(
+        args.agent, args.entrypoint, args.model, args.version_label, args.tenant
+    )

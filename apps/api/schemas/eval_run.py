@@ -20,4 +20,5 @@ class EvalRunResponse(BaseModel):
     triggered_by: str
     started_at: datetime | None
     completed_at: datetime | None
+    error: str | None = None
     gate_result: GateResult | None = None

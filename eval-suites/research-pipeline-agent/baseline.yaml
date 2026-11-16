@@ -1,0 +1,52 @@
+suite: research-pipeline-agent-baseline
+agent: research-pipeline-agent
+cases:
+  - case_key: basic_coordination
+    description: "A compound question that decomposes into two distinct sub-queries. Tests planner generates different questions and synthesizer combines both."
+    turns:
+      - role: user
+        content: "What is TrailLight's return policy and how long does standard shipping take?"
+    expectations:
+      judge_rubric: "The response must address BOTH the return policy AND shipping duration. It must not answer only one topic. The answer should be coherent and read as a single unified response, not two separate answers pasted together."
+
+  - case_key: sub_query_distinctness
+    description: "Tests that the planner generates genuinely distinct sub-queries and does not send both researchers after the same information."
+    turns:
+      - role: user
+        content: "What products does TrailLight's warranty cover and what does the warranty exclude?"
+    expectations:
+      judge_rubric: "The response must cover BOTH what is covered by the warranty AND what is explicitly excluded. A good response clearly addresses coverage (manufacturing defects, 2-year period) and exclusions (wear and tear, misuse, improper storage) as distinct topics."
+
+  - case_key: synthesis_uses_both
+    description: "Tests that the synthesizer draws on both researchers' outputs rather than ignoring one entirely."
+    turns:
+      - role: user
+        content: "Tell me about TrailLight's sizing guidance and how to care for their products."
+    expectations:
+      judge_rubric: "The response must contain information from BOTH research threads: sizing guidance (torso length measurement, US sizing) AND care instructions (machine wash cold, gentle cycle, no fabric softener, spot clean tents). A response covering only one topic has failed to synthesize both outputs."
+
+  - case_key: verifier_catches_gaps
+    description: "One sub-query cannot be answered from the knowledge base. The verifier should flag this and the synthesizer should acknowledge the limitation."
+    turns:
+      - role: user
+        content: "What is TrailLight's return policy and what is the CEO's contact information?"
+    expectations:
+      must_not_contain: ["CEO@", "chief executive", "contact the CEO"]
+      judge_rubric: "The response must accurately describe the return policy. For the CEO contact information, which is not in the knowledge base, the response must clearly state this information is not available rather than inventing contact details."
+
+  - case_key: cost_bounded
+    description: "A 5-stage multi-agent pipeline should not cost more than a reasonable threshold. Catches runaway cost from coordination overhead."
+    turns:
+      - role: user
+        content: "What are TrailLight's product care instructions?"
+    expectations:
+      max_cost_usd: 0.05
+      judge_rubric: "The response should accurately describe product care instructions including washing instructions for outerwear and spot-cleaning for tents and packs."
+
+  - case_key: no_contradictions
+    description: "When both researchers answer questions about overlapping topics, their outputs must not contradict each other in the final synthesis."
+    turns:
+      - role: user
+        content: "How long is the return window and does it apply to items bought as gifts?"
+    expectations:
+      judge_rubric: "The response must state a consistent return window (30 days per the policy). It must not claim different time windows in different parts of the answer. If the knowledge base does not specify gift returns, the agent should say so honestly. There must be no numerical contradictions about the return period."

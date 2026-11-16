@@ -35,10 +35,14 @@ from google import genai
 from google.genai import types
 
 from apps.api.core.config import get_settings
+from apps.api.core.llm_rate_limiter import get_limiter
+from apps.api.core.model_profiles import get_profile
 from apps.api.services.adapters.base import AgentTurnResult, ToolCall
 
-CHAT_MODEL = "gemini-2.5-flash"
-EMBEDDING_MODEL = "gemini-embedding-001"
+# Model profile system (not hardcoded model names) -- architectural rule #3. Level 3
+# and Level 4 agents already did this correctly; this was the one benchmark agent
+# still on a hardcoded CHAT_MODEL constant.
+PROFILE = get_profile("standard")
 EMBEDDING_DIMENSIONS = 768
 RELEVANCE_THRESHOLD = 0.60  # calibrated 2026-06: noise floor ~0.55-0.56, real relevance ~0.67+
 TOP_K = 3
@@ -51,12 +55,15 @@ EMBEDDING_INPUT_COST_PER_M = 0.15
 
 KNOWLEDGE_BASE_DIR = Path(__file__).parent / "knowledge_base" / "docs"
 
-# print(KNOWLEDGE_BASE_DIR)
-# print(KNOWLEDGE_BASE_DIR.exists())
-# print(list(KNOWLEDGE_BASE_DIR.glob("*.md")))
-
 _settings = get_settings()
 _client = genai.Client(api_key=_settings.gemini_api_key)
+_limiter = get_limiter("standard")
+# Separate from _limiter: embedding_model and chat_model are different models
+# with different provider-side quotas (gemini-embedding-001 vs gemini-2.5-flash
+# for this profile). Sharing one limiter for both -- as this file did before --
+# meant every retrieval embedding call was silently consuming chat call budget
+# under the wrong model's name in Redis. See get_limiter()'s docstring.
+_embedding_limiter = get_limiter("standard", for_embedding=True)
 
 # Lazily populated on first real run_turn() call, not at import time -- importing
 # this module (e.g. for testing _load_chunks/_cosine_similarity) must not burn a
@@ -84,8 +91,9 @@ def _load_chunks() -> list[dict]:
 
 def _embed(texts: list[str], task_type: str) -> tuple[list[list[float]], int]:
     """Returns (embedding vectors, total input tokens used) for cost tracking."""
+    _embedding_limiter.acquire()
     response = _client.models.embed_content(
-        model=EMBEDDING_MODEL,
+        model=PROFILE.embedding_model,
         contents=texts,
         config=types.EmbedContentConfig(
             task_type=task_type,
@@ -109,8 +117,6 @@ def _ensure_knowledge_base_indexed() -> None:
     if _CHUNKS is not None:
         return
     _CHUNKS = _load_chunks()
-    # print(f"Chunks loaded: {len(_CHUNKS)}")
-    print(_CHUNKS[:3])
     _CHUNK_EMBEDDINGS, _ = _embed([c["text"] for c in _CHUNKS], task_type="RETRIEVAL_DOCUMENT")
 
 
@@ -156,8 +162,9 @@ def run_turn(session_state: dict, user_message: str) -> AgentTurnResult:
             f"{('Conversation so far:' + chr(10) + history_text + chr(10) + chr(10)) if history_text else ''}"
             f"User question: {user_message}"
         )
+        _limiter.acquire()
         response = _client.models.generate_content(
-            model=CHAT_MODEL,
+            model=PROFILE.chat_model,
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.1,

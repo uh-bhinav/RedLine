@@ -136,3 +136,55 @@ def test_gate_reasons_are_human_readable():
     assert "pass_rate" in reason
     assert "below" in reason
     assert "minimum" in reason
+
+
+# ---------- ARS threshold (Phase 4 Section 1) ----------
+
+def test_gate_ignores_ars_when_not_configured():
+    """ars/min_ars default to None -- every pre-Phase-4 call above this line in the
+    file must keep passing unchanged, which is the actual regression this guards."""
+    result = _compute_gate_result(
+        passed_count=3, total=3, avg_cost_usd=0.0, avg_latency_ms=0,
+        min_pass_rate=0.9, max_avg_cost_usd=None, max_avg_latency_ms=None,
+    )
+    assert result.passed is True
+
+
+def test_gate_fails_when_ars_below_min_ars():
+    result = _compute_gate_result(
+        passed_count=3, total=3, avg_cost_usd=0.0, avg_latency_ms=0,
+        min_pass_rate=0.9, max_avg_cost_usd=None, max_avg_latency_ms=None,
+        ars=0.75, min_ars=0.9,
+    )
+    assert result.passed is False
+    assert any("ars" in r and "0.750" in r for r in result.reasons)
+
+
+def test_gate_passes_when_ars_meets_min_ars_exactly():
+    result = _compute_gate_result(
+        passed_count=3, total=3, avg_cost_usd=0.0, avg_latency_ms=0,
+        min_pass_rate=0.9, max_avg_cost_usd=None, max_avg_latency_ms=None,
+        ars=0.9, min_ars=0.9,
+    )
+    assert result.passed is True
+
+
+def test_gate_skips_ars_check_when_min_ars_configured_but_ars_missing():
+    """A run with no ARSSnapshot yet (predates Phase 4, or ARS computation failed
+    non-fatally) must not crash the gate or count as a violation by default."""
+    result = _compute_gate_result(
+        passed_count=3, total=3, avg_cost_usd=0.0, avg_latency_ms=0,
+        min_pass_rate=0.9, max_avg_cost_usd=None, max_avg_latency_ms=None,
+        ars=None, min_ars=0.9,
+    )
+    assert result.passed is True
+
+
+def test_gate_collects_ars_reason_alongside_other_violations():
+    result = _compute_gate_result(
+        passed_count=1, total=3, avg_cost_usd=0.1, avg_latency_ms=10000,
+        min_pass_rate=0.9, max_avg_cost_usd=0.01, max_avg_latency_ms=5000,
+        ars=0.5, min_ars=0.9,
+    )
+    assert result.passed is False
+    assert len(result.reasons) == 4

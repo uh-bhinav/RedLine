@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: eval-worker
-          image: "redline-eval_service:latest"
+          image: "{{ .Values.image.registry }}redline-eval_service:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           # Override the CMD from the Dockerfile -- same image as eval_service
           # but runs the worker process instead of uvicorn.

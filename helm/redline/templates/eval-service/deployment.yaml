@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: eval-service
-          image: "redline-eval_service:latest"
+          image: "{{ .Values.image.registry }}redline-eval_service:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.evalService.port }}

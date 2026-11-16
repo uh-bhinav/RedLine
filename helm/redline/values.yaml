@@ -6,12 +6,16 @@ image:
 infra:
   databaseUrl: "postgresql+psycopg2://redline:redline_dev_password@host.k3d.internal:5433/redline"
   redisUrl: "redis://host.k3d.internal:6379/0"
-  redpandaBootstrapServers: "host.k3d.internal:19092"
+  redpandaBootstrapServers: "host.k3d.internal:29092"
   clickhouseHost: "host.k3d.internal"
   clickhousePort: "9000"
   clickhouseDb: "redline"
-  clickhouseUser: "default"
-  clickhousePassword: "redline_dev"
+  # Phase 5.1: Helm-deployed pods only ever need app-level ClickHouse access
+  # (they never run init_clickhouse()) -- admin/superuser creds must never
+  # reach the cluster.
+  clickhouseUser: "redline_app"
+  clickhousePassword: "redline_app_dev_password"
+  otelExporterEndpoint: "http://host.k3d.internal:4317"
 
 evalService:
   replicaCount: 1
@@ -62,6 +66,25 @@ worker:
     limits:
       cpu: "1000m"
       memory: "1Gi"
+
+# Phase 4 Section 5 -- deliberately a SEPARATE profile from eval-worker, not a
+# shared one. A load-runner thread pool holds many concurrent outbound
+# connections (CPU/memory shape closer to a real load generator) while an
+# eval-worker spends ~95% of its time blocked on one LLM call at a time
+# (foundational doc §9.3's whole point: heterogeneous worker pools scale
+# independently because their resource profiles are actually different, not
+# just organizationally different).
+loadWorker:
+  lagThreshold: "1"
+  minReplicas: 0
+  maxReplicas: 4
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
 
 gateway:
   port: 80

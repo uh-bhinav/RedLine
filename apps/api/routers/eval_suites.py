@@ -6,7 +6,12 @@ now exposed over HTTP so the CLI's `push-suite` command can call it instead of
 needing direct database access (the CLI should never touch Postgres directly --
 only the API server does).
 """
+import uuid
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from apps.api.core.db import get_db
@@ -16,6 +21,14 @@ from apps.api.schemas.eval_suite_push import EvalSuitePushResponse
 from apps.api.schemas.eval_suite_yaml import EvalSuiteYAML
 
 router = APIRouter(prefix="/eval-suites", tags=["eval-suites"])
+
+
+class EvalSuiteSummary(BaseModel):
+    id: uuid.UUID
+    agent_id: uuid.UUID
+    name: str
+    case_count: int
+    created_at: datetime
 
 
 @router.post("", response_model=EvalSuitePushResponse, status_code=200)
@@ -77,3 +90,37 @@ def push_suite(
     return EvalSuitePushResponse(
         suite_id=suite.id, created_suite=created_suite, cases_added=added, cases_updated=updated
     )
+
+
+@router.get("", response_model=list[EvalSuiteSummary])
+def list_eval_suites(
+    agent_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    api_key: ApiKey = Depends(require_api_key),
+) -> list[EvalSuiteSummary]:
+    """Phase 5.3 (dashboard v2) -- lets the frontend populate a suite picker when
+    triggering an eval/diff/load/mining run. Only POST existed before this."""
+    agent = db.get(Agent, agent_id)
+    if agent is None or agent.tenant_id != api_key.tenant_id:
+        # 404, not 403 -- same "don't confirm existence" discipline as
+        # dashboard.py's _owned_agent().
+        raise HTTPException(status_code=404, detail="agent not found")
+
+    suites = db.query(EvalSuite).filter(EvalSuite.agent_id == agent.id).all()
+    counts = dict(
+        db.query(EvalCase.suite_id, func.count(EvalCase.id))
+        .filter(EvalCase.suite_id.in_([s.id for s in suites]))
+        .group_by(EvalCase.suite_id)
+        .all()
+    )
+
+    return [
+        EvalSuiteSummary(
+            id=s.id,
+            agent_id=s.agent_id,
+            name=s.name,
+            case_count=counts.get(s.id, 0),
+            created_at=s.created_at,
+        )
+        for s in suites
+    ]

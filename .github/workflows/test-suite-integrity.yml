@@ -1,0 +1,29 @@
+name: Test Suite Integrity
+
+# Fast, infra-free checks that run on every PR. Full unit/integration test runs
+# need Postgres/Redis/ClickHouse/Redpanda and are run manually / in a future
+# dedicated workflow -- this one only guards against the specific regression
+# recorded in docs/todo.md's "Test Suite Integrity" section: a test file with no
+# pytestmark silently runs zero times under both `pytest -m unit` and
+# `pytest -m integration`, so neither of those runs -- were they wired into CI --
+# would ever surface it.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-pytestmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Every test file declares pytestmark
+        run: python -m apps.api.scripts.check_pytestmark

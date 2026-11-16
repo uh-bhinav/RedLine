@@ -16,6 +16,7 @@ pytest==8.3.4
 
 google-genai==2.10.0
 numpy==2.2.6
+scikit-learn==1.7.2
 
 PyYAML==6.0.2
 
@@ -35,5 +36,6 @@ clickhouse-driver==0.2.9
 prometheus-client==0.21.1
 opentelemetry-sdk==1.34.1
 opentelemetry-instrumentation-fastapi==0.55b1
+opentelemetry-exporter-otlp-proto-grpc==1.34.1
 
 APScheduler==3.11.1

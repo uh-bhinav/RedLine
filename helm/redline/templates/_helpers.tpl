@@ -59,4 +59,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
     secretKeyRef:
       name: redline-secrets
       key: clickhouse-password
+- name: OTEL_EXPORTER_ENDPOINT
+  valueFrom:
+    configMapKeyRef:
+      name: redline-config
+      key: otel-exporter-endpoint
 {{- end }}

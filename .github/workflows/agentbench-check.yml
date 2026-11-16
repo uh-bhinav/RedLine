@@ -18,7 +18,9 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       REDLINE_API_KEY: ${{ secrets.REDLINE_API_KEY }}
       REDLINE_BASE_URL: ${{ secrets.REDLINE_BASE_URL }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # No GEMINI_API_KEY: the CLI never calls an LLM. The eval runs server-side,
+      # where the key lives. A CI job holding a provider key it does not use is
+      # needless secret exposure.
 
     steps:
       - uses: actions/checkout@v4
@@ -28,23 +30,20 @@ jobs:
           python-version: "3.10"
           cache: pip
 
-      - name: Install dependencies
-        run: pip install -r apps/api/requirements.txt typer==0.9.4 click==8.1.8 rich==13.7.1 tomli==2.0.1 tomli-w==1.0.0 "httpx>=0.28.1,<1.0.0" pyyaml==6.0.2
-
-      - name: Write .env for Settings import
-        run: |
-          echo "DATABASE_URL=postgresql+psycopg2://placeholder:placeholder@localhost/placeholder" >> .env
-          echo "JWT_SECRET_KEY=placeholder" >> .env
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+      # The CLI is a standalone package (Phase 3 Section 4). It talks to RedLine over
+      # HTTP and needs none of the server's dependencies -- no psycopg2, no
+      # confluent-kafka, no .env shim for a Settings import that never happens.
+      - name: Install agentbench CLI
+        run: pip install .
 
       - name: agentbench login
         run: |
-          python -m apps.cli.main login \
+          agentbench login \
             --base-url "$REDLINE_BASE_URL" \
             --api-key "$REDLINE_API_KEY"
 
       - name: agentbench ci-check
         run: |
-          python -m apps.cli.main ci-check \
+          agentbench ci-check \
             --agent rag-agent \
             --suite baseline

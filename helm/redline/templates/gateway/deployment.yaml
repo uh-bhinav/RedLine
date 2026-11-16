@@ -15,6 +15,11 @@ data:
         listen {{ .Values.gateway.port }};
         server_name _;
 
+        # Phase 5.3 -- dashboard v2 static build, baked into the gateway
+        # image by infra/gateway/Dockerfile.
+        root /usr/share/nginx/html;
+        index index.html;
+
         proxy_set_header X-Real-IP       $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host            $host;
@@ -22,6 +27,9 @@ data:
         location /auth       { proxy_pass http://eval_service;  }
         location /eval-runs  { proxy_pass http://eval_service;  }
         location /ci         { proxy_pass http://eval_service;  }
+        location /diff-runs  { proxy_pass http://eval_service;  }
+        location /load-runs  { proxy_pass http://eval_service;  }
+        location /mining     { proxy_pass http://eval_service;  }
         location /agents     { proxy_pass http://agent_service; }
         location /eval-suites { proxy_pass http://agent_service; }
         location /dashboard  { proxy_pass http://gate_service;  }
@@ -29,6 +37,12 @@ data:
         location /health {
             add_header Content-Type application/json;
             return 200 '{"status":"ok","service":"redline-gateway","env":"k3d"}';
+        }
+
+        # SPA fallback -- see infra/gateway.nginx.conf (the dev-compose
+        # equivalent) for the full explanation of try_files here.
+        location / {
+            try_files $uri /index.html;
         }
     }
 ---
@@ -54,8 +68,8 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: nginx:alpine
-          imagePullPolicy: Always
+          image: "{{ .Values.image.registry }}redline-gateway:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.gateway.port }}
           volumeMounts:

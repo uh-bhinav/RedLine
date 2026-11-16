@@ -8,26 +8,26 @@ rather than duplicating them, using the same uq_* constraints already in the sch
 
 Usage (from the repo root):
     python -m apps.api.scripts.push_suite eval-suites/rag-agent/baseline.yaml
+    python -m apps.api.scripts.push_suite eval-suites/rag-agent/baseline.yaml --tenant acme-corp
 """
-import sys
+import argparse
 from pathlib import Path
 
 import yaml
 
 from apps.api.core.db import SessionLocal
-from apps.api.models import Agent, EvalCase, EvalSuite, Tenant
+from apps.api.models import Agent, EvalCase, EvalSuite
 from apps.api.schemas.eval_suite_yaml import EvalSuiteYAML
+from apps.api.scripts._tenant import resolve_tenant
 
 
-def push_suite(yaml_path: Path) -> None:
+def push_suite(yaml_path: Path, tenant_arg: str | None = None) -> None:
     raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
     suite_def = EvalSuiteYAML.model_validate(raw)
 
     db = SessionLocal()
     try:
-        tenant = db.query(Tenant).first()
-        if tenant is None:
-            raise RuntimeError("no tenant found -- run `python -m apps.api.scripts.seed` first")
+        tenant = resolve_tenant(db, tenant_arg)
 
         agent = (
             db.query(Agent)
@@ -86,7 +86,11 @@ def push_suite(yaml_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python -m apps.api.scripts.push_suite <path-to-suite.yaml>")
-        sys.exit(1)
-    push_suite(Path(sys.argv[1]))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("suite_path", type=Path, help="Path to suite YAML file")
+    parser.add_argument(
+        "--tenant", default=None,
+        help="Tenant name or UUID. Required once more than one tenant exists.",
+    )
+    args = parser.parse_args()
+    push_suite(args.suite_path, args.tenant)

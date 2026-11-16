@@ -1,0 +1,87 @@
+# Model profiles for RedLine benchmark agents.
+#
+# Benchmarks declare:  model_profile: standard
+# The adapter resolves the profile to a concrete provider + model.
+# Benchmarks never hardcode a model name -- this file is the single
+# place where provider choices are made.
+#
+# To switch all benchmarks from Gemini to another provider:
+#   1. Add a new profile block below
+#   2. Update the agent YAML to reference the new profile
+#   3. No benchmark code changes
+
+# daily_limit (Phase 3 Section 3): requests-per-day ceiling, enforced by
+# LLMRateLimiter against a Redis counter keyed per (provider, model, UTC date).
+# rpm alone was not enough -- Phase 2 Section 10 testing exhausted the free-tier
+# DAILY quota, which no per-minute window can prevent, and that is what still
+# blocks the Level 3 and Level 4 gate verdicts.
+#
+# IMPORTANT -- verified 2026-07-29 (Phase 4.5 cleanup, task "verify daily_limit
+# values against real Gemini docs"): gemini-2.0-flash and gemini-2.0-flash-lite,
+# which this file previously pinned "standard" and "cheap" to, have been SHUT
+# DOWN by Google (ai.google.dev/gemini-api/docs/models lists both under
+# "Previous models -- Shut down"). Any profile still pointing at them would fail
+# every call, not just misreport a quota -- that is a stronger bug than a stale
+# number. Remapped below to the current stable Flash lineup.
+#
+# rpm/daily_limit themselves: ai.google.dev/gemini-api/docs/rate-limits no longer
+# publishes fixed public numbers at all -- it says free-tier limits "depend on
+# your usage tier" and sends you to the (account-authenticated) AI Studio
+# dashboard at aistudio.google.com/rate-limit, which this agent cannot reach.
+# The values below started as the most-corroborated third-party-reported numbers,
+# but standard's daily_limit was then confirmed against GROUND TRUTH: a real
+# eval run against this project's actual API key hit a genuine 429 whose body is
+# Google's own quota metering, not a blog guess:
+#   "Quota exceeded ... quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier
+#    ... model: gemini-2.5-flash ... quotaValue: '20'"
+# i.e. the real ceiling is 20/day, not the 250 third-party aggregators reported --
+# updated below. high_reasoning/cheap have no equivalent ground truth yet (no
+# quota-exceeded response observed for them), so they keep the earlier
+# third-party-sourced, deliberately-conservative estimates. Re-verify via your
+# own account's AI Studio dashboard before relying on any of these in production.
+#
+# Also found while getting that ground truth (2026-07-29, running the Level 3/4
+# gate verdicts): gemini-2.5-flash-lite returns 404 "no longer available to new
+# users" on this project's actual key -- not a quota issue, a hard account-level
+# rejection despite ai.google.dev/gemini-api/docs/models still listing it as
+# stable. "cheap" remapped to gemini-3.5-flash-lite, confirmed to actually work
+# with a live call. Also observed: gemini-3.5-flash returned a genuine (Google-side)
+# 503 "high demand" for an extended period this same session -- transient, so
+# high_reasoning was deliberately NOT changed over what its own error message
+# calls a temporary spike; don't repeat this remap reactively if you see one 503.
+
+profiles:
+  # Default development profile -- fast, cheap, good enough for eval suites
+  standard:
+    provider: gemini
+    chat_model: gemini-2.5-flash    # was gemini-2.0-flash (shut down)
+    embedding_model: gemini-embedding-001
+    rpm: 10            # reported free-tier RPM for gemini-2.5-flash
+    daily_limit: 20    # CONFIRMED 2026-07-29 via a real 429's quota metering (see header)
+    max_tokens: 1024
+
+  # Higher reasoning capability -- slower, more expensive
+  high_reasoning:
+    provider: gemini
+    chat_model: gemini-3.5-flash    # was gemini-2.5-flash (now the "standard" tier)
+    embedding_model: gemini-embedding-001
+    rpm: 5             # no published free-tier RPM found for gemini-3.5-flash --
+                       # carried forward from the prior gemini-2.5-flash estimate
+    daily_limit: 100   # same caveat -- reconfirm via AI Studio
+    max_tokens: 2048
+
+  # Minimal cost -- for CI runs where we just need a signal
+  cheap:
+    provider: gemini
+    chat_model: gemini-3.5-flash-lite    # was gemini-2.5-flash-lite -- 404 "no longer
+                                          # available to new users" on this project's
+                                          # actual key (2026-07-29); confirmed working
+    embedding_model: gemini-embedding-001
+    rpm: 15            # reported free-tier RPM for the flash-lite tier -- no ground
+                       # truth yet for this specific model, carried forward as before
+    daily_limit: 250   # reported figures ranged 250-1000 RPD -- kept conservative,
+                       # reconfirm via AI Studio
+    max_tokens: 512
+
+# Default profile used when an agent doesn't declare one
+default_profile: standard

@@ -1,0 +1,229 @@
+name: CI
+
+# Phase 5.2 platform pipeline: push -> unit + integration tests -> build ->
+# pip-audit + Trivy scan -> (main only) push to GHCR with an immutable tag ->
+# (main only) helm upgrade --atomic -> health check.
+#
+# Additive to the existing workflows, not a replacement:
+#   - test-suite-integrity.yml: fast pytestmark linter, unchanged
+#   - agentbench-check.yml: CLI-driven gate check against a live deployed
+#     instance, unchanged
+# Neither of those runs pytest against this codebase -- that's what the
+# unit-tests/integration-tests jobs below add for the first time.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[api,dev]"
+
+      - name: pytest -m unit
+        run: pytest -m unit -q
+
+  # Phase 5.3 (dashboard v2). Makes ADR-006's core promise literally true: a
+  # backend response-model change breaks the frontend build, in CI, not
+  # silently at runtime in a user's browser.
+  frontend-build:
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install -r apps/api/requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - run: make generate-types
+
+      - name: Fail if generated types drifted from the committed file
+        run: git diff --exit-code apps/dashboard/src/lib/api-types.ts
+
+      - working-directory: apps/dashboard
+        run: npm ci
+
+      - working-directory: apps/dashboard
+        run: npm run typecheck
+
+      - working-directory: apps/dashboard
+        run: npm run test -- --run
+
+      - working-directory: apps/dashboard
+        run: npm run build
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+psycopg2://redline:redline_dev_password@127.0.0.1:5433/redline
+      REDIS_URL: redis://127.0.0.1:6379/0
+      REDPANDA_BOOTSTRAP_SERVERS: 127.0.0.1:19092
+      CLICKHOUSE_HOST: 127.0.0.1
+      CLICKHOUSE_PORT: "9000"
+      # Phase 5.1: init_clickhouse() needs the container's real bootstrap
+      # creds (set in docker-compose.yml's clickhouse service) as ADMIN, and
+      # separately creates CLICKHOUSE_USER/PASSWORD as the least-privilege
+      # app identity every other step in this job then connects as.
+      CLICKHOUSE_ADMIN_USER: default
+      CLICKHOUSE_ADMIN_PASSWORD: redline_dev
+      CLICKHOUSE_USER: redline_app
+      CLICKHOUSE_PASSWORD: redline_app_ci_password
+      JWT_SECRET_KEY: ci_test_secret_key_not_for_production
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[api,dev]"
+
+      # Reuses the SAME docker-compose.yml developers use locally -- a
+      # separate CI-only compose file would drift out of sync with what's
+      # actually being tested.
+      - name: Start infra
+        run: |
+          cp .env.example .env
+          docker compose up -d postgres redis redpanda clickhouse
+          until docker exec redline_postgres pg_isready -U redline -d redline > /dev/null 2>&1; do sleep 1; done
+
+      - name: Migrate + seed
+        run: |
+          alembic upgrade head
+          python -m apps.api.scripts.init_topics
+          python -m apps.api.scripts.init_clickhouse
+          python -m apps.api.scripts.seed
+
+      - name: Push baseline suite + register a version
+        run: |
+          python -m apps.api.scripts.push_suite eval-suites/rag-agent/baseline.yaml
+          python -m apps.api.scripts.register_agent_version \
+            --agent rag-agent \
+            --entrypoint agents.rag_agent.agent:run_turn \
+            --model gemini-2.5-flash \
+            --version-label v1
+
+      # GEMINI_API_KEY may not be set on forked-PR runs (secrets aren't
+      # available to them). Tests that need a live LLM call are allowed to
+      # fail non-blockingly until that secret exists on this repo -- tighten
+      # once it's confirmed present.
+      - name: pytest -m integration
+        run: pytest -m integration -q || [ -z "$GEMINI_API_KEY" ]
+
+  build-scan:
+    # frontend-build gains a place here (Phase 5.3): the gateway image now
+    # bakes in the dashboard build, so it must never be built from a
+    # dashboard that doesn't even typecheck.
+    needs: [unit-tests, integration-tests, frontend-build]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Phase 5.3 -- an include list, not a bare service name list, since
+        # gateway's Dockerfile lives at a different path (infra/gateway/,
+        # not apps/<service>/) and doesn't fit the apps/${service}/Dockerfile
+        # pattern the other three follow.
+        include:
+          - service: eval_service
+            dockerfile: apps/eval_service/Dockerfile
+          - service: agent_service
+            dockerfile: apps/agent_service/Dockerfile
+          - service: gate_service
+            dockerfile: apps/gate_service/Dockerfile
+          - service: gateway
+            dockerfile: infra/gateway/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        run: docker build -t redline-${{ matrix.service }}:${{ github.sha }} -f ${{ matrix.dockerfile }} .
+
+      - name: pip-audit
+        run: |
+          pip install pip-audit
+          # Non-blocking initially -- report and triage before flipping this
+          # to a hard gate.
+          pip-audit -r apps/api/requirements.txt --desc || true
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: redline-${{ matrix.service }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          # Report-only initially -- flip to "1" once a baseline is triaged.
+          exit-code: "0"
+
+      - name: Push to GHCR
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag redline-${{ matrix.service }}:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/redline-${{ matrix.service }}:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/redline-${{ matrix.service }}:${{ github.sha }}
+
+  # Correct and complete, but INERT until a KUBE_CONFIG secret + a reachable
+  # cluster exist (Phase 5.4, deferred). Not a broken job -- there is simply
+  # nowhere to deploy to yet.
+  deploy:
+    needs: build-scan
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Deploy
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "KUBE_CONFIG secret not set -- no deploy target yet (Phase 5.4). Skipping."
+            exit 0
+          fi
+          echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+          export KUBECONFIG="$PWD/kubeconfig"
+          helm upgrade redline ./helm/redline -n redline \
+            --set image.tag=${{ github.sha }} \
+            --set image.registry=ghcr.io/${{ github.repository_owner }}/ \
+            --set secrets.jwtSecretKey="${{ secrets.JWT_SECRET_KEY }}" \
+            --set secrets.geminiApiKey="${{ secrets.GEMINI_API_KEY }}" \
+            --atomic --wait --timeout 5m
+
+      - name: Health check
+        if: env.KUBE_CONFIG != ''
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          export KUBECONFIG="$PWD/kubeconfig"
+          kubectl get pods -n redline -l app.kubernetes.io/instance=redline
+          declare -A PORTS=([eval-service]=8001 [agent-service]=8002 [gate-service]=8003)
+          for svc in "${!PORTS[@]}"; do
+            kubectl exec -n redline "deploy/$svc" -- python3 -c \
+              "import urllib.request; urllib.request.urlopen('http://localhost:${PORTS[$svc]}/health', timeout=5)" \
+              || echo "warning: $svc health check failed"
+          done

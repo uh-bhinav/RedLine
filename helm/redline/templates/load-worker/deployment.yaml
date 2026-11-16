@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-worker
+  namespace: redline
+  labels:
+    {{- include "redline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: load-worker
+spec:
+  # replicas NOT set here -- KEDA's ScaledObject owns replica count, same rule
+  # as eval-worker (architectural rule #9).
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: load-worker
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: load-worker
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: load-worker
+          image: "{{ .Values.image.registry }}redline-eval_service:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Same image as eval_service/eval-worker -- only the entrypoint differs.
+          command: ["python", "-m", "apps.api.workers.load_worker"]
+          env:
+            {{- include "redline.commonEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.loadWorker.resources | nindent 12 }}

@@ -1,0 +1,67 @@
+{
+  "model": "claude-sonnet-4-5",
+  "thinking": {
+    "enabled": true,
+    "triggers": [
+      "architecture",
+      "design",
+      "refactor",
+      "phase 3",
+      "migration",
+      "schema change",
+      "new service",
+      "STABLE CONTRACT",
+      "security"
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(alembic:*)",
+      "Bash(psql:*)",
+      "Bash(docker:*)",
+      "Bash(kubectl:*)",
+      "Bash(curl:*)",
+      "Bash(rpk:*)",
+      "Read(*)",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(DROP TABLE:*)",
+      "Bash(alembic downgrade base:*)"
+    ]
+  },
+  "project": {
+    "type": "python-backend",
+    "name": "RedLine (AgentBench Cloud)",
+    "language": "python",
+    "python_version": "3.10",
+    "framework": "fastapi",
+    "primary_db": "postgresql",
+    "port": 5433,
+    "test_command": "pytest -m unit",
+    "integration_test_command": "pytest -m integration"
+  },
+  "context": {
+    "always_include": [
+      ".claude/memory/bugs.md",
+      ".claude/memory/decisions.md",
+      ".claude/rules/architecture.md"
+    ]
+  },
+  "behavior": {
+    "prefer_edit_over_rewrite": true,
+    "run_tests_after_changes": true,
+    "test_command_after_changes": "pytest -m unit -q",
+    "check_lint_after_changes": false
+  }
+}

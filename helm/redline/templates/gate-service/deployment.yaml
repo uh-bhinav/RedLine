@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: gate-service
-          image: "redline-gate_service:latest"
+          image: "{{ .Values.image.registry }}redline-gate_service:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.gateService.port }}

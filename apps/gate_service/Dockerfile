@@ -8,7 +8,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY apps/api ./apps/api
 COPY apps/gate_service ./apps/gate_service
-COPY .env .env
+COPY config ./config
+
+# Deliberately NOT `COPY .env .env` -- see apps/eval_service/Dockerfile for the
+# full reasoning (§10.10, redundant with docker-compose's env_file directive
+# and Helm's Secret/ConfigMap injection).
 
 RUN touch apps/__init__.py
 

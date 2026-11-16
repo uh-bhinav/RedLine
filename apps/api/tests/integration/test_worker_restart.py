@@ -59,15 +59,30 @@ def test_worker_restart_does_not_duplicate_job():
         # Step 2: Worker A crashes here -- nothing more called on `queue`
         # The row is now status=in_progress but never completed/failed
 
-        # Step 3 + 4: Worker B restarts and polls -- must get None, not the same job
+        # Step 3 + 4: Worker B restarts and polls -- it must not get OUR job back.
+        #
+        # Deliberately not `assert reclaimed is None`. claim_next_job() is scoped by
+        # job_type, not by tenant or by test, so any unrelated pending job in a shared
+        # dev database is a legitimate thing for worker B to claim -- that is the
+        # queue working correctly, not a failure. Asserting an empty queue made this
+        # test order-dependent: it passed alone and failed in a full run whenever any
+        # earlier test (or a manual publish) left a pending job behind.
+        #
+        # The invariant that actually matters is narrower and always true: the job
+        # already marked in_progress is never handed out again.
         db_b = SessionLocal()
         try:
             queue_b = PostgresJobQueue(db_b)
             reclaimed = queue_b.claim_next_job(job_types=["eval.requested"])
-            assert reclaimed is None, (
+            assert reclaimed is None or reclaimed.id != job_id, (
                 "a restarted worker must NOT reclaim a job already marked in_progress -- "
                 "this would cause duplicate processing and corrupt eval results"
             )
+            # Put anything unrelated we claimed back, so this test does not strand
+            # another test's job in in_progress.
+            if reclaimed is not None:
+                reclaimed.status = "pending"
+                db_b.commit()
         finally:
             db_b.close()
 

@@ -10,6 +10,17 @@ Topic design:
   eval.requested   -- API publishes here; eval workers consume
   eval.completed   -- workers publish results here; trace workers consume
   trace.emitted    -- eval engine emits per-turn trace events for ClickHouse
+  load.requested   -- Phase 4 Section 4: API publishes here; load_worker consumes.
+                      Its own topic (not eval.requested) because a load runner's
+                      resource profile is completely different from an eval
+                      runner's -- firing many concurrent outbound requests vs.
+                      processing one case at a time (foundational doc §9.3).
+  *.dead-letter     -- Phase 5.1: a job that has exceeded max_job_retries lands
+                      here instead of being retried again. Inspect with
+                      `rpk topic consume eval.requested.dead-letter` (via the
+                      redpanda container) or the Redpanda Console UI at
+                      localhost:8080. See docs/infra-hardening.md for the manual
+                      requeue procedure -- there is no automated replay tool yet.
 
 Usage (from the repo root):
     python -m apps.api.scripts.init_topics
@@ -24,6 +35,9 @@ TOPICS = [
     "eval.requested",
     "eval.completed",
     "trace.emitted",
+    "load.requested",
+    "eval.requested.dead-letter",
+    "load.requested.dead-letter",
 ]
 
 

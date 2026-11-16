@@ -61,9 +61,15 @@ def run_worker_loop() -> None:
                 print(f"job {job_id} completed")
             except Exception as exc:
                 error_text = f"{exc}\n{traceback.format_exc()}"
-                worker.update_status(job_id, "failed", error=error_text, db=db)
+                # Phase 5.1: retry with backoff via a fresh message, or dead-letter
+                # once max_job_retries is exhausted -- see retry_or_dead_letter()'s
+                # docstring for why commit_offset() below is still required either way.
+                dead_lettered = worker.retry_or_dead_letter(claimed, error_text)
+                final_status = "failed" if dead_lettered else "pending"
+                worker.update_status(job_id, final_status, error=error_text, db=db)
                 worker.commit_offset()  # commit to avoid infinite re-delivery loop
-                print(f"job {job_id} FAILED: {exc}")
+                tag = "DEAD-LETTERED" if dead_lettered else f"retrying (attempt {claimed.retry_count + 1})"
+                print(f"job {job_id} FAILED, {tag}: {exc}")
             finally:
                 lock.release(job_id)
                 db.close()

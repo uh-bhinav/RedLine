@@ -12,7 +12,7 @@ often and would be unaffected redeploys without this separation.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from apps.api.routers import ci, eval_runs
+from apps.api.routers import ci, diff, eval_runs, load_runs, mining
 from apps.api.routers import auth
 from apps.api.core.telemetry import setup_metrics
 
@@ -33,6 +33,9 @@ app.add_middleware(
 setup_metrics(app, "eval-service")
 
 app.include_router(eval_runs.router)
+app.include_router(diff.router)
+app.include_router(load_runs.router)
+app.include_router(mining.router)
 app.include_router(ci.router)
 app.include_router(auth.router)
 

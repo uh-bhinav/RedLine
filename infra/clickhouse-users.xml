@@ -4,4 +4,15 @@
             <max_memory_usage>1000000000</max_memory_usage>
         </default>
     </profiles>
+    <!-- Phase 5.1: grants the container's bootstrap `default` user
+         access_management so init_clickhouse() can CREATE USER/GRANT the
+         least-privilege redline_app runtime identity. Without this, `default`
+         (created via the CLICKHOUSE_USER/CLICKHOUSE_PASSWORD env vars in
+         docker-compose.yml) has no access-management rights by default and
+         CREATE USER fails with "Not enough privileges". -->
+    <users>
+        <default>
+            <access_management>1</access_management>
+        </default>
+    </users>
 </clickhouse>

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: agent-service
-          image: "redline-agent_service:latest"
+          image: "{{ .Values.image.registry }}redline-agent_service:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.agentService.port }}

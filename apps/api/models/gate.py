@@ -25,6 +25,9 @@ class GatePolicy(Base):
     min_pass_rate: Mapped[float] = mapped_column(Float, nullable=False, server_default="0.9")
     max_avg_cost_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
     max_avg_latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Phase 4 Section 1: None = no ARS gate configured (same "missing = skip check"
+    # convention as max_avg_cost_usd/max_avg_latency_ms, not "missing = auto-fail").
+    min_ars: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

@@ -7,6 +7,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -69,6 +70,12 @@ class EvalRun(Base):
             "status IN ('pending','running','completed','failed')", name="ck_eval_runs_status"
         ),
         CheckConstraint("triggered_by IN ('manual','ci')", name="ck_eval_runs_triggered_by"),
+        # Phase 5.1 -- eval_runs is the highest-traffic table (every eval
+        # trigger, every CLI/dashboard query) and had no index backing
+        # tenant-scoped, time-ordered lookups until this. See migration 0010
+        # and docs/explain-analyze-eval-runs-index.md for the real
+        # seq-scan-to-index-scan before/after.
+        Index("ix_eval_runs_tenant_created", "tenant_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -85,6 +92,11 @@ class EvalRun(Base):
     )
     status: Mapped[str] = mapped_column(String, nullable=False, server_default="pending")
     triggered_by: Mapped[str] = mapped_column(String, nullable=False)
+    # Populated only on status='failed'. Added because DailyQuotaExceeded (and
+    # every other run_eval() failure) used to be visible only as "failed" with
+    # no reason -- the actual exception was recorded in the OTel span and the
+    # ClickHouse trace, neither of which the dashboard or CLI ever reads back.
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
     git_pr_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     github_check_run_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

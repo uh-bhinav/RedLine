@@ -2,10 +2,24 @@
 End-to-end integration test (Section 15).
 
 Runs the actual case_001-case_003 suite against the real RAG agent and asserts on
-real EvalCaseResult rows. Uses REDLINE_TEST_MODEL env var (default: gemini-2.0-flash)
-to keep LLM cost low per the roadmap's model-routing-for-cost-control principle
-(Holy Grail §10.12) -- the real agent remains on gemini-2.5-flash; only this test
-overrides it.
+real EvalCaseResult rows. Uses REDLINE_TEST_MODEL env var (default:
+gemini-3.5-flash-lite) to keep LLM cost low per the roadmap's
+model-routing-for-cost-control principle (Holy Grail §10.12).
+
+Phase 3.5's Bug 3 fix replaced the agent's old CHAT_MODEL constant with
+PROFILE = get_profile("standard") (config/model_profiles.yaml's "standard" profile).
+This test's model override therefore patches `rag_agent.PROFILE.chat_model` in
+place -- ModelProfile is a plain (non-frozen) dataclass, so mutating the field the
+running module already holds a reference to is enough; there is no module-level
+CHAT_MODEL left to reassign.
+
+Note (2026-07-29): the default here used to be gemini-2.0-flash, which Google has
+since shut down (see config/model_profiles.yaml's header comment). It was briefly
+switched to gemini-2.5-flash-lite, but that model returns 404 "no longer available
+to new users" on this project's actual API key -- a hard rejection, not a quota
+issue -- so it moved again to gemini-3.5-flash-lite, confirmed working with a live
+call, to keep this test's "cheaper than production" intent intact now that
+"standard" itself points at gemini-2.5-flash.
 
 Requires:
   - Postgres running (docker-compose up postgres)
@@ -30,7 +44,7 @@ from apps.api.services.gate_engine import evaluate as gate_evaluate
 pytestmark = pytest.mark.integration
 
 # Model used in this test -- cheaper than the production model (roadmap §15)
-TEST_MODEL = os.environ.get("REDLINE_TEST_MODEL", "gemini-2.0-flash")
+TEST_MODEL = os.environ.get("REDLINE_TEST_MODEL", "gemini-3.5-flash-lite")
 
 
 def _get_required_rows(db):
@@ -69,10 +83,9 @@ def test_baseline_suite_runs_and_produces_case_results():
         tenant, suite, version = _get_required_rows(db)
 
         # Patch the agent's model to the cheaper test model for this run only
-        original_model = None
         import agents.rag_agent.agent as rag_agent
-        original_model = rag_agent.CHAT_MODEL
-        rag_agent.CHAT_MODEL = TEST_MODEL
+        original_model = rag_agent.PROFILE.chat_model
+        rag_agent.PROFILE.chat_model = TEST_MODEL
 
         try:
             eval_run = EvalRun(
@@ -127,8 +140,7 @@ def test_baseline_suite_runs_and_produces_case_results():
 
         finally:
             # Always restore the original model even if the test fails
-            if original_model is not None:
-                rag_agent.CHAT_MODEL = original_model
+            rag_agent.PROFILE.chat_model = original_model
 
     finally:
         db.close()

@@ -18,6 +18,22 @@ services:
       timeout: 5s
       retries: 5
 
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.25.2-p0
+    container_name: redline_pgbouncer
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "200"
+      DEFAULT_POOL_SIZE: "20"
+      AUTH_TYPE: scram-sha-256
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "6432:5432"
+
   redis:
     image: redis:7-alpine
     container_name: redline_redis
@@ -39,9 +55,18 @@ services:
     command:
       - redpanda
       - start
-      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
-      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
-      # - --advertise-kafka-addr internal://redpanda:9092,external://host.k3d.internal:19092
+      # Three listeners, not two: "external" advertises localhost:19092 for
+      # clients on the Mac host (e.g. a locally-run worker process); a single
+      # external listener CANNOT also serve k3d pods, because pods that connect
+      # via host.k3d.internal:19092 still get told (via Kafka's own metadata
+      # protocol) to reconnect to whatever address is advertised -- "localhost"
+      # from inside a pod is the pod itself, not the Mac, so every call after
+      # the initial bootstrap failed with "Connection refused". This is Bug 2:
+      # confirmed still present 2026-07-29 (Phase 4.5 cleanup) via real
+      # eval-worker/load-worker pod logs on a live k3d cluster before this fix.
+      # "k3d" is a dedicated third listener solely for in-cluster pods.
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092,k3d://0.0.0.0:29092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092,k3d://host.k3d.internal:29092
       - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
       - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
       - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
@@ -52,6 +77,7 @@ services:
       - --default-log-level=warn
     ports:
       - "19092:19092"
+      - "29092:29092"
       - "18082:18082"
       - "9644:9644"
     volumes:
@@ -92,6 +118,7 @@ services:
       - redline_ch_data:/var/lib/clickhouse
       - redline_ch_logs:/var/log/clickhouse-server
       - ./infra/clickhouse-config.xml:/etc/clickhouse-server/config.d/memory.xml:ro
+      - ./infra/clickhouse-users.xml:/etc/clickhouse-server/users.d/init-users.xml:ro
     ulimits:
       nofile:
         soft: 262144
@@ -115,6 +142,7 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       REDPANDA_BOOTSTRAP_SERVERS: "redpanda:9092"
       CLICKHOUSE_HOST: "clickhouse"
+      OTEL_EXPORTER_ENDPOINT: "http://tempo:4317"
     depends_on:
       postgres:
         condition: service_healthy
@@ -122,6 +150,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      tempo:
+        condition: service_started
     ports:
       - "8001:8001"
     healthcheck:
@@ -142,11 +172,14 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       REDPANDA_BOOTSTRAP_SERVERS: "redpanda:9092"
       CLICKHOUSE_HOST: "clickhouse"
+      OTEL_EXPORTER_ENDPOINT: "http://tempo:4317"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      tempo:
+        condition: service_started
     ports:
       - "8002:8002"
     healthcheck:
@@ -167,6 +200,7 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       REDPANDA_BOOTSTRAP_SERVERS: "redpanda:9092"
       CLICKHOUSE_HOST: "clickhouse"
+      OTEL_EXPORTER_ENDPOINT: "http://tempo:4317"
     depends_on:
       postgres:
         condition: service_healthy
@@ -174,6 +208,8 @@ services:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
+      tempo:
+        condition: service_started
     ports:
       - "8003:8003"
     healthcheck:
@@ -182,9 +218,28 @@ services:
       timeout: 5s
       retries: 5
 
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: redline_tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./infra/tempo.yaml:/etc/tempo.yaml:ro
+      - redline_tempo_data:/var/tempo
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "3200:3200"   # Tempo query API (Grafana datasource target)
+
   # ─── API Gateway ─────────────────────────────────────────────────────────────
   gateway:
-    image: nginx:alpine
+    # Phase 5.3 -- custom image baking in the dashboard's static SPA build
+    # (infra/gateway/Dockerfile), replacing the bare nginx:alpine image. The
+    # config volume mount below still overrides infra/gateway.nginx.conf at
+    # container start, so local nginx-config iteration doesn't need a rebuild
+    # -- only the baked-in dist/ (the dashboard build itself) needs one.
+    build:
+      context: .
+      dockerfile: infra/gateway/Dockerfile
     container_name: redline_gateway
     restart: unless-stopped
     depends_on:
@@ -210,3 +265,4 @@ volumes:
   redline_redpanda_data:
   redline_ch_data:
   redline_ch_logs:
+  redline_tempo_data:

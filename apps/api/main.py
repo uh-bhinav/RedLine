@@ -54,12 +54,15 @@ async def rate_limit_middleware(request: Request, call_next):
 
 
 from apps.api.routers import dashboard
-from apps.api.routers import agent, ci, eval_runs, eval_suites
+from apps.api.routers import agent, ci, diff, eval_runs, eval_suites, load_runs, mining
 from apps.api.routers import auth
 
 app.include_router(agent.router)
 app.include_router(eval_suites.router)
 app.include_router(ci.router)
 app.include_router(eval_runs.router)
+app.include_router(diff.router)
+app.include_router(load_runs.router)
+app.include_router(mining.router)
 app.include_router(dashboard.router)
 app.include_router(auth.router)

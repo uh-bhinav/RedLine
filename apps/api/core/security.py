@@ -1,5 +1,5 @@
 """
-Auth + authorization dependency (Phase 2 Section 6).
+Auth + authorization dependency (Phase 2 Section 6, Phase 3 Section 1).
 
 require_api_key() now accepts EITHER:
   - Bearer <api_key>   -- long-lived, for CLI and CI pipelines (unchanged from Phase 1)
@@ -7,6 +7,13 @@ require_api_key() now accepts EITHER:
 
 Both resolve to (tenant_id, user_id | None, role) so downstream code never needs
 to know which credential type was used. RBAC enforcement is in require_role().
+
+Phase 3 Section 1 adds get_tenant_context(), which resolves the *authenticated*
+tenant row. Before Phase 3, two routers resolved the tenant with
+`db.query(Tenant).first()` -- correct only while exactly one tenant exists, and a
+silent cross-tenant read the moment a second one does. That call must never
+reappear: every tenant comes from the auth context, never from the database's
+insertion order and never from a client-supplied parameter.
 """
 from __future__ import annotations
 
@@ -86,9 +93,67 @@ def require_api_key(
     )
 
 
+class TenantContext:
+    """The authenticated tenant, resolved from AuthContext -- never from a client parameter.
+
+    Carries the AuthContext through so a router that needs the role or user_id does
+    not have to declare a second dependency.
+    """
+
+    def __init__(self, tenant: Tenant, auth: AuthContext):
+        self.tenant = tenant
+        self.auth = auth
+
+    @property
+    def tenant_id(self) -> uuid.UUID:
+        return self.tenant.id
+
+    @property
+    def role(self) -> str:
+        return self.auth.role
+
+    @property
+    def user_id(self) -> uuid.UUID | None:
+        return self.auth.user_id
+
+
+def get_tenant_context(
+    auth: AuthContext = Depends(require_api_key),
+    db: Session = Depends(get_db),
+) -> TenantContext:
+    """Resolves the tenant row for the authenticated caller.
+
+    404 rather than 500 on a missing tenant: the credential is structurally valid but
+    its tenant has been deleted, which from the caller's perspective is "your tenant
+    is not there," not "the server is broken."
+    """
+    tenant = db.get(Tenant, auth.tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="tenant not found")
+    return TenantContext(tenant=tenant, auth=auth)
+
+
 def require_role(*allowed_roles: str):
     """Dependency factory for RBAC. Usage: Depends(require_role('admin', 'developer'))"""
     def _check(ctx: AuthContext = Depends(require_api_key)) -> AuthContext:
+        if ctx.role not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"role '{ctx.role}' is not allowed; required: {list(allowed_roles)}",
+            )
+        return ctx
+    return _check
+
+
+def require_tenant_role(*allowed_roles: str):
+    """RBAC + resolved tenant in one dependency.
+
+    Usage: Depends(require_tenant_role('admin', 'developer'))
+
+    Exists so a mutating route does not have to declare both require_role and
+    get_tenant_context and then reconcile two objects that must agree.
+    """
+    def _check(ctx: TenantContext = Depends(get_tenant_context)) -> TenantContext:
         if ctx.role not in allowed_roles:
             raise HTTPException(
                 status_code=403,

@@ -1,0 +1,83 @@
+suite: stateful-support-agent-baseline
+agent: stateful-support-agent
+cases:
+  - case_key: entity_memory
+    description: "User establishes product context in turn 1, references it implicitly in turn 3. Agent must recall without being told again."
+    turns:
+      - role: user
+        content: "I bought the Cascade 45L backpack about three weeks ago and I am having an issue with it."
+      - role: user
+        content: "The zipper broke on the main compartment."
+      - role: user
+        content: "Can I get a replacement or a refund for it?"
+    expectations:
+      judge_rubric: "The response must reference the Cascade 45L backpack by name or clearly acknowledge it is the item in question, without asking the user to repeat what product they purchased. It should address return or replacement options for a recently purchased item with a manufacturing defect."
+
+  - case_key: preference_memory
+    description: "User states a communication preference in turn 1. Agent must honor it and not suggest a channel the user rejected."
+    turns:
+      - role: user
+        content: "I would prefer to handle everything over email rather than phone calls."
+      - role: user
+        content: "I need to start a return for a tent I bought last month."
+    expectations:
+      must_not_contain: ["call us", "phone", "1-800", "call our"]
+      judge_rubric: "The response must describe the return process without suggesting the user call anyone. It should acknowledge or respect the stated email preference."
+
+  - case_key: constraint_memory
+    description: "User states a constraint in turn 1. Agent must factor it into turn 2 without making the user repeat it."
+    turns:
+      - role: user
+        content: "I want to return a jacket but I no longer have the original packaging or tags."
+      - role: user
+        content: "What are my options for returning it?"
+    expectations:
+      must_not_contain: ["please include the original packaging", "include the original tags"]
+      judge_rubric: "The response must directly address the situation where the user does not have the original packaging. It must NOT instruct the user to include original packaging as if the agent forgot this constraint. It should give realistic options given the missing packaging."
+
+  - case_key: correction_memory
+    description: "User states a fact in turn 1, corrects it in turn 2. Agent must use the corrected value in turn 3."
+    turns:
+      - role: user
+        content: "I have had my TrailLight tent for about 3 years."
+      - role: user
+        content: "Actually wait, I looked at my receipt and it has only been 18 months."
+      - role: user
+        content: "Is it still under warranty?"
+    expectations:
+      judge_rubric: "The response must evaluate warranty eligibility based on 18 months of ownership, NOT 3 years. If the agent uses 3 years as the duration it has failed to record the correction. The response should indicate whether 18 months falls within the 2-year warranty period -- it does."
+
+  - case_key: no_repeated_questions
+    description: "User provides full order context upfront. Agent must never ask for information already given."
+    turns:
+      - role: user
+        content: "I placed order number TL-98234 on June 15th for a Summit Pro Jacket in size Medium."
+      - role: user
+        content: "I received the wrong size. What should I do?"
+    expectations:
+      must_not_contain: ["order number", "when did you", "what size", "which product", "what did you order"]
+      judge_rubric: "The response must NOT ask for the order number, date, product name, or size. The agent should proceed directly to explaining what to do about receiving the wrong item, using the context already provided."
+
+  - case_key: context_accumulation
+    description: "User builds context across 4 turns. Agent must hold all of it and use it coherently in the final response."
+    turns:
+      - role: user
+        content: "I want to return something."
+      - role: user
+        content: "It is the Summit Pro Jacket, size Large."
+      - role: user
+        content: "I bought it about 3 weeks ago."
+      - role: user
+        content: "The waterproofing failed completely on the first use. What do I do?"
+    expectations:
+      judge_rubric: "The final response must demonstrate awareness of all context: the item is a Summit Pro Jacket size Large, purchased 3 weeks ago, with a waterproofing defect on first use. It must address this as a potential manufacturing defect and describe the return or warranty process. It must not ask for any information the user already provided across the 4 turns."
+
+  - case_key: topic_continuity
+    description: "User asks about a product then refers to a related item implicitly. Agent must resolve the reference correctly."
+    turns:
+      - role: user
+        content: "What is the warranty on TrailLight backpacks?"
+      - role: user
+        content: "And does that same warranty apply to the tents as well?"
+    expectations:
+      judge_rubric: "The second response must correctly interpret 'that same warranty' as referring to the warranty described in the first answer. It must compare tent and backpack warranty terms directly without asking which warranty the user is referring to."

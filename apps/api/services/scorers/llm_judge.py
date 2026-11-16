@@ -15,10 +15,18 @@ from google.genai import types
 from pydantic import BaseModel
 
 from apps.api.core.config import get_settings
+from apps.api.core.llm_rate_limiter import get_limiter
+from apps.api.core.model_profiles import get_profile
 from apps.api.models.eval import EvalCase
 from apps.api.services.scorers.base import ScorerResult, Turn
 
-JUDGE_MODEL = "gemini-2.5-flash"
+# Architectural rule #3: model names live only in config/model_profiles.yaml. This
+# was the second hardcoded "gemini-2.5-flash" found during Phase 3.5 (the first was
+# agents/rag_agent/agent.py's CHAT_MODEL). The judge deliberately uses
+# "high_reasoning" rather than "standard" -- grading correctness is a harder
+# reasoning task than the agent call being graded, and a weak judge is worse than a
+# slow one.
+_JUDGE_PROFILE = get_profile("high_reasoning")
 
 
 class JudgeVerdict(BaseModel):
@@ -33,6 +41,14 @@ class LLMJudgeScorer:
     def __init__(self):
         settings = get_settings()
         self._client = genai.Client(api_key=settings.gemini_api_key)
+        # Found while fixing the model hardcoding (Phase 3.5, "Bug 3"): this scorer
+        # made an unmetered LLM call on every case with a judge_rubric -- neither the
+        # per-minute window nor the Phase 3.3 daily quota applied to it. Since the
+        # judge is the LAST scorer per eval_engine ordering but still runs once per
+        # case, an eval suite using judge_rubric on most cases (the baseline rag-agent
+        # suite does) was spending daily quota the platform had no record of, which
+        # undermines the whole reason 3.3 exists.
+        self._limiter = get_limiter("high_reasoning")
 
     def score(self, case: EvalCase, transcript: list[Turn]) -> ScorerResult:
         rubric = case.expectations.get("judge_rubric")
@@ -49,8 +65,9 @@ class LLMJudgeScorer:
             "Does this conversation satisfy the rubric?"
         )
 
+        self._limiter.acquire()
         response = self._client.models.generate_content(
-            model=JUDGE_MODEL,
+            model=_JUDGE_PROFILE.chat_model,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",

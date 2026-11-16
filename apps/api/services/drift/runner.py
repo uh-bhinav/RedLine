@@ -22,6 +22,11 @@ from prometheus_client import Counter, Gauge
 from apps.api.core.db import SessionLocal
 from apps.api.models import AgentVersion, EvalCaseResult, EvalRun, EvalSuite
 from apps.api.models.drift import DriftAlert, DriftSnapshot
+from apps.api.services.diff_engine import (
+    DiffClassification,
+    DiffEngineError,
+    compute_diff_over_time,
+)
 from apps.api.services.drift.detector import (
     BASELINE_WINDOW,
     DEFAULT_DRIFT_THRESHOLD,
@@ -188,3 +193,39 @@ def _check_one_version(db, agent_version: AgentVersion, threshold: float) -> Non
         logger.warning(f"  DRIFT ALERT: {result.detail}")
     else:
         logger.info(f"  no drift: {result.detail}")
+
+    _check_behavior_diff(agent_version, suite)
+
+
+def _check_behavior_diff(agent_version: AgentVersion, suite: EvalSuite) -> None:
+    """Phase 4 Section 2: on every scheduled tick, also check this version's
+    behavior against its own recent history. This is what "subsumes" the original
+    roadmap's separate 'behavior drift' item -- rather than a second
+    pass-rate-shaped detector, it reuses the same behavioral-diff machinery
+    `agentbench diff` exposes on demand, just invoked automatically on a schedule.
+
+    Deliberately compares the SAME version against ITSELF across its two most
+    recent completed runs (compute_diff_over_time), not against the previous
+    registered version. `agent_versions` has a UNIQUE(agent_id, content_hash)
+    constraint, so two DIFFERENT versions always have different content_hash --
+    diffing against a different version can only ever show SAFE_REFACTOR or
+    EXPECTED_CHANGE, never SILENT_DRIFT. Comparing a version against its own
+    history is the only way "code did not change" is representable at all, and it
+    is exactly what a real silent-drift event looks like: nobody touched this
+    version, the provider changed the model underneath it between two scheduled
+    runs.
+    """
+    try:
+        diff_result = compute_diff_over_time(agent_version.id, suite.id)
+    except DiffEngineError as exc:
+        # Non-fatal, matching model drift's per-version try/except in
+        # run_drift_check(): fewer than 2 completed runs of this version so far
+        # (including the very first check ever) is routine, not a scheduler failure.
+        logger.info(f"  behavior diff skipped: {exc}")
+        return
+
+    if diff_result.classification == DiffClassification.SILENT_DRIFT:
+        DRIFT_ALERTS_TOTAL.labels(drift_type="behavior").inc()
+        logger.warning(f"  BEHAVIOR DRIFT ALERT: {diff_result.detail}")
+    else:
+        logger.info(f"  behavior diff: {diff_result.detail}")

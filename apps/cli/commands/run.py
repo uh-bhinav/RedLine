@@ -70,7 +70,13 @@ def run_cmd(
                 break
 
     if run["status"] == "failed":
-        console.print("[red]Eval run failed (worker error -- check worker logs)[/red]")
+        reason = run.get("error")
+        if reason:
+            console.print(f"[red]Eval run failed:[/red] {reason}")
+        else:
+            console.print(
+                "[red]Eval run failed (no reason recorded -- check worker logs)[/red]"
+            )
         raise typer.Exit(1)
 
     gate = run.get("gate_result", {})

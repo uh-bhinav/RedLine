@@ -7,8 +7,8 @@ Three pillars:
                  Custom eval metrics track business-level signals.
                  /metrics endpoint exposed on every service for Prometheus scraping.
   2. Logs     -- structured JSON stdout; Promtail collects into Loki automatically.
-  3. Traces   -- OTel SDK with console exporter (Phase 2). Traces appear in pod logs
-                 (Loki-indexed). Phase 3: swap for OTLPSpanExporter -> Grafana Tempo.
+  3. Traces   -- OTel SDK with OTLPSpanExporter -> Grafana Tempo (Phase 5.1).
+                 Query via Tempo's HTTP API or a Grafana datasource pointed at it.
 
 Design note: prometheus-fastapi-instrumentator 8.x requires starlette>=1.0.0 but
 fastapi==0.115.6 ships starlette 0.41.x. Rather than introduce a version conflict,
@@ -22,10 +22,11 @@ import time
 
 from fastapi import FastAPI, Request, Response
 from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.trace import get_tracer_provider
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     Counter,
@@ -34,6 +35,10 @@ from prometheus_client import (
 )
 from opentelemetry.trace import Status
 from opentelemetry.trace import StatusCode
+
+from apps.api.core.config import get_settings
+
+_settings = get_settings()
 
 # ─── Structured logging ───────────────────────────────────────────────────────
 
@@ -108,7 +113,14 @@ def _setup_tracing(service_name: str):
 
     provider = TracerProvider(resource=resource)
     provider.add_span_processor(
-        BatchSpanProcessor(ConsoleSpanExporter())
+        BatchSpanProcessor(
+            # timeout=5: an unreachable Tempo (no infra running, or a unit-test
+            # process) must fail an export attempt in bounded time, not hang on
+            # gRPC's default connection/retry behavior. Tracing must never be
+            # load-bearing -- the same principle emit_trace()'s non-fatal
+            # try/except already applies to ClickHouse writes.
+            OTLPSpanExporter(endpoint=_settings.otel_exporter_endpoint, insecure=True, timeout=5)
+        )
     )
     trace.set_tracer_provider(provider)
 

@@ -10,6 +10,8 @@ import pytest
 
 from apps.api.services.adapters.local_python import LocalPythonAdapter
 
+pytestmark = pytest.mark.unit
+
 
 def test_local_python_adapter_loads_and_calls_entrypoint():
     adapter = LocalPythonAdapter("apps.api.tests.unit.fixtures.dummy_agent:run_turn")

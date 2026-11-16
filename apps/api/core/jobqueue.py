@@ -36,6 +36,11 @@ class ClaimedJob(BaseModel):
     tenant_id: uuid.UUID
     job_type: str
     payload: dict
+    # Phase 5.1 -- how many times this message has already been retried after a
+    # failure. Defaults to 0 so PostgresJobQueue callers (which never set this)
+    # are unaffected; only RedpandaEvalWorker.consume_one() populates it from the
+    # message envelope.
+    retry_count: int = 0
 
 
 class JobQueue(Protocol):

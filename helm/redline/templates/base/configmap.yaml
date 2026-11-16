@@ -12,3 +12,4 @@ data:
   clickhouse-port: {{ .Values.infra.clickhousePort | quote }}
   clickhouse-db: {{ .Values.infra.clickhouseDb | quote }}
   clickhouse-user: {{ .Values.infra.clickhouseUser | quote }}
+  otel-exporter-endpoint: {{ .Values.infra.otelExporterEndpoint | quote }}
