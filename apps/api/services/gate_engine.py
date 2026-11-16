@@ -19,6 +19,7 @@ from apps.api.core.db import SessionLocal
 from apps.api.models import AgentVersion, EvalCaseResult, EvalRun, GatePolicy
 
 DEFAULT_MIN_PASS_RATE = 0.9
+MIN_ARS = 0.85
 
 
 class GateResult(BaseModel):
@@ -61,6 +62,23 @@ def evaluate(eval_run_id: uuid.UUID) -> GateResult:
             reasons.append(f"avg_cost_usd ${avg_cost_usd:.6f} exceeds max ${max_avg_cost_usd}")
         if max_avg_latency_ms is not None and avg_latency_ms > max_avg_latency_ms:
             reasons.append(f"avg_latency_ms {avg_latency_ms:.0f}ms exceeds max {max_avg_latency_ms}ms")
+
+        # Reliability rules (added with the dashboard): ARS floor + error budget.
+        from apps.api.models import ARSSnapshot
+        from apps.api.services import ars_engine
+
+        snap = db.query(ARSSnapshot).filter(ARSSnapshot.eval_run_id == eval_run.id).first()
+        if snap is not None:
+            if snap.ars < MIN_ARS:
+                reasons.append(f"ars {snap.ars:.2f} is below minimum {MIN_ARS:.2f}")
+            budget = ars_engine.evaluate_error_budget(
+                db, agent_version.agent_id, as_of=snap.created_at
+            )
+            if budget.exhausted:
+                reasons.append(
+                    f"error budget exhausted: {budget.breached}/{budget.runs_considered} "
+                    f"recent runs below target"
+                )
 
         return GateResult(passed=len(reasons) == 0, reasons=reasons)
     finally:

@@ -20,3 +20,14 @@ dist/
 
 # CLI local config
 .redline/
+# Local dev
+.pgdata/
+apps/dashboard/dist/
+.playwright-mcp/
+
+certs/
+.coverage
+
+# Runtime state (scripts/redline.ps1)
+.run/
+.compose_up.log

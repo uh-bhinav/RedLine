@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     database_url: str
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 60
+    jwt_expire_minutes: int = 1440
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     llm_provider: str = "gemini"
     gemini_api_key: str = ""
@@ -16,6 +17,10 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
 
     github_token: str = ""
+
+    worker_poll_seconds: float = 2.0
+    job_timeout_seconds: int = 600
+    job_stale_seconds: int = 120
 
 
 @lru_cache

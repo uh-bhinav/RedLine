@@ -1,11 +1,10 @@
 """
-Agent + AgentVersion endpoints (Phase1 roadmap Section 13 dependency).
+Agent + AgentVersion endpoints.
 
-The CLI's `init` and `register-version` commands call these directly -- this is
-the real API surface that replaces what push_suite.py / register_agent_version.py
-did by talking straight to the DB. Both are idempotent by design: registering the
-same agent name or the same content_hash twice returns the existing row, not a
-duplicate or an error.
+Used by the CLI (`init`, `register-version`, authenticating with an API key) and by the
+dashboard's "Register Agent" dialog (authenticating with a login JWT). Both are idempotent
+by design: registering the same agent name or the same content_hash twice returns the
+existing row, not a duplicate or an error.
 """
 import uuid
 
@@ -13,8 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from apps.api.core.db import get_db
-from apps.api.core.security import require_api_key
-from apps.api.models import Agent, AgentVersion, ApiKey
+from apps.api.core.security import TenantContext, require_tenant_role
+from apps.api.models import Agent, AgentVersion
 from apps.api.schemas.agent import AgentCreate, AgentResponse, AgentVersionCreate, AgentVersionResponse
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -24,17 +23,17 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 def create_agent(
     payload: AgentCreate,
     db: Session = Depends(get_db),
-    api_key: ApiKey = Depends(require_api_key),
+    ctx: TenantContext = Depends(require_tenant_role("developer")),
 ) -> Agent:
     agent = (
         db.query(Agent)
-        .filter(Agent.tenant_id == api_key.tenant_id, Agent.name == payload.name)
+        .filter(Agent.tenant_id == ctx.tenant_id, Agent.name == payload.name)
         .first()
     )
     if agent is not None:
         return agent  # idempotent: registering the same name twice is a no-op
 
-    agent = Agent(tenant_id=api_key.tenant_id, name=payload.name, description=payload.description)
+    agent = Agent(tenant_id=ctx.tenant_id, name=payload.name, description=payload.description)
     db.add(agent)
     db.commit()
     db.refresh(agent)
@@ -46,10 +45,10 @@ def register_version(
     agent_id: uuid.UUID,
     payload: AgentVersionCreate,
     db: Session = Depends(get_db),
-    api_key: ApiKey = Depends(require_api_key),
+    ctx: TenantContext = Depends(require_tenant_role("developer")),
 ) -> AgentVersion:
     agent = db.get(Agent, agent_id)
-    if agent is None or agent.tenant_id != api_key.tenant_id:
+    if agent is None or agent.tenant_id != ctx.tenant_id:
         raise HTTPException(status_code=404, detail="agent not found")
 
     existing = (

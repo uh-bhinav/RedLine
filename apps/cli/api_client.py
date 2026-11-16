@@ -25,7 +25,10 @@ class RedLineClient:
     def _raise_for(self, response: httpx.Response) -> httpx.Response:
         if response.status_code >= 400:
             try:
-                detail = response.json().get("detail", response.text)
+                body = response.json()
+                err = body.get("error")
+                msg = err.get("message") if isinstance(err, dict) else None
+                detail = msg if isinstance(msg, str) and msg else body.get("detail", response.text)
             except Exception:
                 detail = response.text
             raise APIError(response.status_code, str(detail))

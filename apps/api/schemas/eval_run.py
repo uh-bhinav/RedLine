@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -9,7 +10,7 @@ from apps.api.services.gate_engine import GateResult
 class EvalRunCreate(BaseModel):
     agent_version_id: uuid.UUID
     suite_id: uuid.UUID
-    triggered_by: str = "manual"
+    triggered_by: Literal["manual", "ci"] = "manual"
 
 
 class EvalRunResponse(BaseModel):

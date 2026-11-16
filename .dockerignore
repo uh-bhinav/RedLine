@@ -1,0 +1,11 @@
+.venv
+.pgdata
+node_modules
+**/node_modules
+dist
+**/dist
+.env
+.git
+**/__pycache__
+*.pyc
+.pytest_cache

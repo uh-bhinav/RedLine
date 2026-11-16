@@ -10,9 +10,14 @@ test_llm_judge_fails_a_conversation_that_violates_the_rubric is the deliberate m
 check the roadmap calls out explicitly: proving the judge actually fails a bad
 transcript, not rubber-stamping everything as a pass.
 """
+import pytest
+
 from apps.api.models.eval import EvalCase
 from apps.api.services.scorers.base import Turn
 from apps.api.services.scorers.llm_judge import LLMJudgeScorer
+
+# skipped automatically (see tests/conftest.py) when GEMINI_API_KEY is not set
+pytestmark = [pytest.mark.integration, pytest.mark.requires_llm]
 
 
 def _fake_case(judge_rubric: str) -> EvalCase:

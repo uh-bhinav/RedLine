@@ -1,0 +1,4 @@
+-r requirements.txt
+
+pytest>=8.0
+pgserver>=0.1.4  # embedded Postgres 16 fallback for tests / scripts/dev_db.py

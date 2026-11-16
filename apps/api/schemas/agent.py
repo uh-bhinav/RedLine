@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AgentCreate(BaseModel):
-    name: str
-    description: str | None = None
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=2000)
 
 
 class AgentResponse(BaseModel):
@@ -19,13 +19,13 @@ class AgentResponse(BaseModel):
 
 
 class AgentVersionCreate(BaseModel):
-    version_label: str
-    model_name: str
-    prompt_text: str
-    tool_schema: list[dict] = []
-    content_hash: str
-    entrypoint: str
-    git_commit_sha: str | None = None
+    version_label: str = Field(min_length=1, max_length=100)
+    model_name: str = Field(min_length=1, max_length=200)
+    prompt_text: str = Field(max_length=200_000)
+    tool_schema: list[dict] = Field(default=[], max_length=200)
+    content_hash: str = Field(min_length=1, max_length=128)
+    entrypoint: str = Field(min_length=1, max_length=500)
+    git_commit_sha: str | None = Field(default=None, max_length=64)
 
 
 class AgentVersionResponse(BaseModel):

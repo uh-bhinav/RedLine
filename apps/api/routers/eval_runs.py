@@ -1,34 +1,48 @@
 """
-Eval run endpoints (Phase1 roadmap Section 10 acceptance criteria).
+Eval run endpoints.
 
-POST /eval-runs creates the EvalRun row, publishes an "eval.requested" job, and
-returns immediately with status: pending -- it never blocks waiting for the worker.
+POST /eval-runs creates the EvalRun row, publishes an "eval.requested" job, and returns
+immediately with status: pending -- it never blocks waiting for the worker.
 GET /eval-runs/{id} just reads current state, which the worker updates asynchronously.
+
+Callers authenticate with either a dashboard JWT or a CLI API key; every lookup is scoped
+to the caller's tenant (an agent version / suite from another tenant is a 404).
 """
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from apps.api.services import gate_engine
 
 from apps.api.core.db import get_db
 from apps.api.core.jobqueue import PostgresJobQueue
-from apps.api.models import EvalRun, Tenant
+from apps.api.core.security import TenantContext, require_tenant_role
+from apps.api.models import Agent, AgentVersion, EvalRun, EvalSuite
 from apps.api.schemas.eval_run import EvalRunCreate, EvalRunResponse
+from apps.api.services import gate_engine
 
 router = APIRouter(prefix="/eval-runs", tags=["eval-runs"])
 
 
+def _check_ownership(db: Session, ctx: TenantContext, version_id: uuid.UUID, suite_id: uuid.UUID) -> None:
+    version = db.get(AgentVersion, version_id)
+    agent = db.get(Agent, version.agent_id) if version else None
+    suite = db.get(EvalSuite, suite_id)
+    if agent is None or agent.tenant_id != ctx.tenant_id:
+        raise HTTPException(status_code=404, detail="agent version not found")
+    if suite is None or suite.agent_id != agent.id:
+        raise HTTPException(status_code=404, detail="suite not found for this agent")
+
+
 @router.post("", response_model=EvalRunResponse, status_code=201)
-def create_eval_run(payload: EvalRunCreate, db: Session = Depends(get_db)) -> EvalRun:
-    # Phase 1 runs with a single seeded tenant (roadmap Section 1) -- no tenant
-    # resolution from auth yet, that's explicitly a Phase 2 concern.
-    tenant = db.query(Tenant).first()
-    if tenant is None:
-        raise HTTPException(status_code=500, detail="no tenant seeded")
+def create_eval_run(
+    payload: EvalRunCreate,
+    db: Session = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant_role("developer")),
+) -> EvalRun:
+    _check_ownership(db, ctx, payload.agent_version_id, payload.suite_id)
 
     eval_run = EvalRun(
-        tenant_id=tenant.id,
+        tenant_id=ctx.tenant_id,
         agent_version_id=payload.agent_version_id,
         suite_id=payload.suite_id,
         status="pending",
@@ -38,16 +52,18 @@ def create_eval_run(payload: EvalRunCreate, db: Session = Depends(get_db)) -> Ev
     db.commit()
     db.refresh(eval_run)
 
-    queue = PostgresJobQueue(db)
-    queue.publish(tenant.id, "eval.requested", {"eval_run_id": str(eval_run.id)})
-
+    PostgresJobQueue(db).publish(ctx.tenant_id, "eval.requested", {"eval_run_id": str(eval_run.id)})
     return eval_run
 
 
 @router.get("/{eval_run_id}", response_model=EvalRunResponse)
-def get_eval_run(eval_run_id: uuid.UUID, db: Session = Depends(get_db)) -> EvalRunResponse:
+def get_eval_run(
+    eval_run_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    ctx: TenantContext = Depends(require_tenant_role("viewer")),
+) -> EvalRunResponse:
     eval_run = db.get(EvalRun, eval_run_id)
-    if eval_run is None:
+    if eval_run is None or eval_run.tenant_id != ctx.tenant_id:
         raise HTTPException(status_code=404, detail="eval_run not found")
 
     # Computed fresh on every read, not persisted -- gate_engine.evaluate() is cheap

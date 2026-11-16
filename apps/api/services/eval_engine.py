@@ -105,6 +105,16 @@ def run_eval(eval_run_id: uuid.UUID) -> None:
         eval_run.status = "completed"
         eval_run.completed_at = datetime.utcnow()
         db.commit()
+
+        # Reliability analytics. Never allowed to fail a run that already completed.
+        try:
+            from apps.api.services import ars_engine, drift_engine
+
+            snapshot = ars_engine.compute_snapshot(db, eval_run)
+            drift_engine.detect(db, eval_run, snapshot)
+        except Exception as exc:  # noqa: BLE001
+            db.rollback()
+            print(f"analytics post-processing failed for run {eval_run.id}: {exc}")
         # Gate verdict is intentionally not computed here -- GET /eval-runs/{id}
         # computes it fresh on every read (gate_engine.evaluate() is cheap and
         # pure), and the CLI's ci-check command is what actually reports it back

@@ -31,13 +31,21 @@ class JudgeVerdict(BaseModel):
 
 class LLMJudgeScorer:
     def __init__(self):
-        settings = get_settings()
-        self._client = genai.Client(api_key=settings.gemini_api_key)
+        # Client is created lazily: importing the API/worker must not require an LLM key.
+        self._client = None
+
+    def _get_client(self):
+        if self._client is None:
+            self._client = genai.Client(api_key=get_settings().gemini_api_key)
+        return self._client
 
     def score(self, case: EvalCase, transcript: list[Turn]) -> ScorerResult:
         rubric = case.expectations.get("judge_rubric")
         if not rubric:
             return ScorerResult(passed=True, detail="no judge_rubric configured")
+        if not get_settings().gemini_api_key:
+            # Fail closed: an unjudgeable case must never silently count as a pass.
+            return ScorerResult(passed=False, detail="LLM judge unavailable: GEMINI_API_KEY is not set")
 
         transcript_text = "\n".join(f"{t.role}: {t.content}" for t in transcript)
         prompt = (
@@ -49,7 +57,7 @@ class LLMJudgeScorer:
             "Does this conversation satisfy the rubric?"
         )
 
-        response = self._client.models.generate_content(
+        response = self._get_client().models.generate_content(
             model=JUDGE_MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(

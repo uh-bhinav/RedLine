@@ -1,21 +1,90 @@
+# RedLine stack: postgres -> migrate (one-shot) -> api + worker -> dashboard
+#   docker compose up -d --build
+# Config comes from .env (copy .env.example). Compose also reads .env for ${...}
+# interpolation below. Inside containers DATABASE_URL is forced to host `postgres`.
+
+x-api-common: &api-common
+  build:
+    context: .
+    dockerfile: apps/api/Dockerfile
+  image: redline-api:local
+  env_file:
+    - path: .env
+      required: false
+  environment: &api-env
+    # Overrides any localhost DATABASE_URL in .env (service DNS name inside the network).
+    # NOTE: URL-encode special characters in POSTGRES_PASSWORD.
+    DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-redline}:${POSTGRES_PASSWORD:-redline_dev_password}@postgres:5432/${POSTGRES_DB:-redline}
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: redline_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: redline
-      POSTGRES_PASSWORD: redline
-      POSTGRES_DB: redline
+      POSTGRES_USER: ${POSTGRES_USER:-redline}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-redline_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-redline}
     ports:
       - "5433:5432"
     volumes:
       - redline_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      # $$ defers expansion to the container's own environment.
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  migrate:
+    <<: *api-common
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *api-common
+    restart: unless-stopped
+    environment:
+      <<: *api-env
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"]
+      interval: 10s
+      timeout: 5s
       retries: 5
+      start_period: 20s
+
+  worker:
+    <<: *api-common
+    command: ["python", "-m", "apps.api.workers.eval_worker"]
+    restart: unless-stopped
+    stop_grace_period: 60s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  dashboard:
+    build:
+      context: apps/dashboard
+      dockerfile: Dockerfile
+      args:
+        # Browser-side URL of the API (baked into the bundle at build time).
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    image: redline-dashboard:local
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   redline_pg_data:

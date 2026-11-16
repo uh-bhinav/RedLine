@@ -1,8 +1,8 @@
 """
 Tests for the Postgres-backed JobQueue (roadmap Section 5).
 
-These need the real docker-compose Postgres running, and the seed script already
-run once (these tests use the seeded tenant). Run from the repo root:
+These run against the isolated redline_test database managed by tests/conftest.py
+(tenants come from the make_tenant fixture; no seed data needed). Run from the repo root:
 
     pytest apps/api/tests/unit/test_jobqueue.py -v
 """
@@ -12,21 +12,12 @@ from sqlalchemy import text
 
 from apps.api.core.db import SessionLocal, engine
 from apps.api.core.jobqueue import PostgresJobQueue
-from apps.api.models import Tenant
-
-
-def _get_seeded_tenant_id(session):
-    tenant = session.query(Tenant).first()
-    assert tenant is not None, "no tenant found — run `python -m apps.api.scripts.seed` first"
-    return tenant.id
-
-
-def test_restarted_worker_does_not_reclaim_an_in_progress_job():
+def test_restarted_worker_does_not_reclaim_an_in_progress_job(make_tenant):
     """Simulates a crash: claim a job (status -> in_progress), do NOT complete it,
     then have a 'restarted' worker poll again. It must not pick up the same job."""
     session = SessionLocal()
     try:
-        tenant_id = _get_seeded_tenant_id(session)
+        tenant_id = make_tenant().id
         queue = PostgresJobQueue(session)
 
         job_id = queue.publish(tenant_id, "test.restart_check", {"marker": "crash-sim"})
@@ -44,14 +35,14 @@ def test_restarted_worker_does_not_reclaim_an_in_progress_job():
         session.close()
 
 
-def test_skip_locked_prevents_concurrent_double_claim():
+def test_skip_locked_prevents_concurrent_double_claim(make_tenant):
     """Holds a real row lock open on one connection (simulating worker A mid-claim) and
     proves a second, fully concurrent claim_next_job() call on a different connection
     skips that row instead of blocking on it or grabbing it too -- even though the row's
     status is still technically 'pending' at that exact moment."""
     setup_session = SessionLocal()
     try:
-        tenant_id = _get_seeded_tenant_id(setup_session)
+        tenant_id = make_tenant().id
         setup_queue = PostgresJobQueue(setup_session)
         job_id = setup_queue.publish(tenant_id, "test.skip_locked_check", {"marker": "race-sim"})
     finally:

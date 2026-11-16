@@ -8,11 +8,11 @@ the same publish()/get_status() signatures without touching any calling code.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Protocol
 
 from pydantic import BaseModel
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text, update
 from sqlalchemy.orm import Session
 
 from apps.api.models.job import Job
@@ -36,6 +36,18 @@ class ClaimedJob(BaseModel):
     tenant_id: uuid.UUID
     job_type: str
     payload: dict
+    attempt: int = 1
+    max_attempts: int = 3
+
+
+class ReapedJob(BaseModel):
+    id: uuid.UUID
+    job_type: str
+    payload: dict
+    status: str  # 'pending' (will retry) | 'failed'
+
+
+RETRY_BASE_SECONDS = 5
 
 
 class JobQueue(Protocol):
@@ -81,7 +93,7 @@ class PostgresJobQueue:
         duration of this one method call (select + update + commit) — never across the
         job's actual processing time, which is what keeps this safe under concurrency.
         """
-        stmt = select(Job).where(Job.status == "pending")
+        stmt = select(Job).where(Job.status == "pending", Job.available_at <= func.now())
         if job_types:
             stmt = stmt.where(Job.job_type.in_(job_types))
         stmt = stmt.order_by(Job.created_at).limit(1).with_for_update(skip_locked=True)
@@ -92,10 +104,65 @@ class PostgresJobQueue:
             return None
 
         job.status = "in_progress"
+        job.attempts = (job.attempts or 0) + 1
+        job.started_at = func.now()
+        job.heartbeat_at = func.now()
         job.updated_at = datetime.utcnow()
         self.db.commit()
+        self.db.refresh(job)
 
-        return ClaimedJob(id=job.id, tenant_id=job.tenant_id, job_type=job.job_type, payload=job.payload)
+        return ClaimedJob(
+            id=job.id, tenant_id=job.tenant_id, job_type=job.job_type, payload=job.payload,
+            attempt=job.attempts, max_attempts=job.max_attempts,
+        )
+
+    def heartbeat(self, job_id: uuid.UUID) -> None:
+        """Marks an in_progress job as still alive so reap_stale() leaves it alone."""
+        self.db.execute(
+            update(Job).where(Job.id == job_id, Job.status == "in_progress").values(heartbeat_at=func.now())
+        )
+        self.db.commit()
+
+    def _fail_or_retry_locked(self, job: Job, error: str) -> str:
+        """Caller must hold the row lock and commit. Returns the new status."""
+        job.error = error
+        job.updated_at = datetime.utcnow()
+        if (job.attempts or 0) < (job.max_attempts or 1):
+            delay = RETRY_BASE_SECONDS * (2 ** (job.attempts or 0))
+            job.status = "pending"
+            job.available_at = func.now() + timedelta(seconds=delay)
+        else:
+            job.status = "failed"
+        return job.status
+
+    def fail_or_retry(self, job_id: uuid.UUID, error: str) -> str:
+        """attempts < max_attempts -> back to pending with exponential backoff
+        (available_at = now + 5 * 2^attempts seconds); otherwise failed.
+        Returns the resulting status ('pending' or 'failed')."""
+        job = self.db.execute(select(Job).where(Job.id == job_id).with_for_update()).scalar_one_or_none()
+        if job is None:
+            self.db.commit()
+            raise ValueError(f"job {job_id} not found")
+        status = self._fail_or_retry_locked(job, error)
+        self.db.commit()
+        return status
+
+    def reap_stale(self, older_than_seconds: int, job_types: list[str] | None = None) -> list[ReapedJob]:
+        """Finds in_progress jobs whose heartbeat is older than the threshold (crashed or
+        hung workers) and routes each through fail_or_retry. FOR UPDATE SKIP LOCKED so
+        concurrent reapers never double-process a job."""
+        last_beat = func.coalesce(Job.heartbeat_at, Job.started_at, Job.updated_at)
+        cutoff = func.now() - timedelta(seconds=older_than_seconds)
+        stmt = select(Job).where(Job.status == "in_progress", last_beat < cutoff)
+        if job_types:
+            stmt = stmt.where(Job.job_type.in_(job_types))
+        stmt = stmt.with_for_update(skip_locked=True)
+        reaped: list[ReapedJob] = []
+        for job in self.db.execute(stmt).scalars().all():
+            status = self._fail_or_retry_locked(job, f"reaped: no heartbeat for >{older_than_seconds}s")
+            reaped.append(ReapedJob(id=job.id, job_type=job.job_type, payload=job.payload, status=status))
+        self.db.commit()
+        return reaped
 
     def mark_completed(self, job_id: uuid.UUID, result: dict) -> None:
         job = self.db.get(Job, job_id)

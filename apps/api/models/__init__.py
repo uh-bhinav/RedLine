@@ -1,4 +1,13 @@
 from apps.api.models.agent import Agent, AgentVersion
+from apps.api.models.analytics import (
+    ARSSnapshot,
+    CandidateCase,
+    DiffCaseResult,
+    DiffRun,
+    DriftAlert,
+    FailureCluster,
+    LoadRun,
+)
 from apps.api.models.api_key import ApiKey
 from apps.api.models.eval import EvalCase, EvalCaseResult, EvalRun, EvalSuite
 from apps.api.models.gate import GatePolicy
@@ -18,4 +27,11 @@ __all__ = [
     "EvalCaseResult",
     "GatePolicy",
     "Job",
+    "ARSSnapshot",
+    "DriftAlert",
+    "DiffRun",
+    "DiffCaseResult",
+    "LoadRun",
+    "FailureCluster",
+    "CandidateCase",
 ]

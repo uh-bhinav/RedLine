@@ -27,6 +27,7 @@ class EvalCaseYAML(BaseModel):
     description: str | None = None
     turns: list[TurnYAML]
     expectations: ExpectationsYAML
+    chaos: bool = False  # chaos-injected adversarial case (shown with a badge in the UI)
 
 
 class EvalSuiteYAML(BaseModel):

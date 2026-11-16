@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 40%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 220 90% 56%;
+    --radius: 0.625rem;
+
+    /* Brand */
+    --brand: 220 90% 56%;
+    --brand-foreground: 0 0% 100%;
+
+    /* Semantic gate / status */
+    --gate-pass: 142 71% 45%;
+    --gate-fail: 0 72% 51%;
+    --gate-pending: 38 92% 50%;
+
+    /* ARS health thresholds (used in JS as numeric boundaries):
+       >= 0.9 healthy, 0.7-0.9 warning, < 0.7 critical */
+
+    /* Diff classification */
+    --diff-silent-drift: 0 72% 51%;
+    --diff-safe-refactor: 220 90% 56%;
+    --diff-expected: 142 71% 45%;
+    --diff-noop: 0 0% 60%;
+  }
+
+  .dark {
+    --background: 224 40% 7%;
+    --foreground: 210 40% 96%;
+    --card: 224 36% 10%;
+    --card-foreground: 210 40% 96%;
+    --popover: 224 36% 10%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 210 40% 96%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 223 28% 16%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 223 28% 15%;
+    --muted-foreground: 215 20% 66%;
+    --accent: 223 28% 16%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 223 24% 19%;
+    --input: 223 24% 19%;
+    --ring: 220 90% 62%;
+    --brand: 220 90% 62%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  h1, h2, h3 {
+    @apply tracking-tight;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

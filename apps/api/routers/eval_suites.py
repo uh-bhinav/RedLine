@@ -64,10 +64,12 @@ def push_suite(
                     description=case_def.description,
                     turns=turns_data,
                     expectations=expectations_data,
+                    is_chaos=case_def.chaos,
                 )
             )
             added += 1
         else:
+            case.is_chaos = case_def.chaos
             case.description = case_def.description
             case.turns = turns_data
             case.expectations = expectations_data
