@@ -16,11 +16,30 @@ from sqlalchemy.orm import Session
 
 from apps.api.core.db import get_db
 from apps.api.core.security import TenantContext, get_tenant_context, require_tenant_role
-from apps.api.models import Agent, AgentVersion, BehaviorDiff
+from apps.api.models import Agent, AgentVersion, BehaviorDiff, EvalSuite
 from apps.api.schemas.diff import DiffRunCreate, DiffRunResponse
 from apps.api.services.diff_engine import DiffEngineError, compute_diff_for_versions
 
 router = APIRouter(prefix="/diff-runs", tags=["diff"])
+
+
+def _diff_context(diff: BehaviorDiff, db: Session) -> dict:
+    """Agent name + version A/B labels + suite name for a stored diff row."""
+    agent = db.get(Agent, diff.agent_id)
+    va = db.get(AgentVersion, diff.version_a_id)
+    vb = db.get(AgentVersion, diff.version_b_id)
+    suite = db.get(EvalSuite, diff.suite_id)
+    return dict(
+        agent_id=diff.agent_id,
+        agent_name=agent.name if agent else None,
+        version_a_id=diff.version_a_id,
+        version_b_id=diff.version_b_id,
+        version_a_label=va.version_label if va else None,
+        version_b_label=vb.version_label if vb else None,
+        suite_id=diff.suite_id,
+        suite_name=suite.name if suite else None,
+        created_at=diff.created_at,
+    )
 
 
 def _owned_version(version_id: uuid.UUID, tenant_id: uuid.UUID, db: Session) -> AgentVersion:
@@ -57,6 +76,9 @@ def create_diff_run(
     assert result.eval_run_a_id is not None
     assert result.eval_run_b_id is not None
 
+    stored = db.get(BehaviorDiff, result.id)
+    extra = _diff_context(stored, db) if stored is not None else {}
+
     return DiffRunResponse(
         id=result.id,
         classification=result.classification.value,
@@ -68,6 +90,7 @@ def create_diff_run(
         detail=result.detail,
         eval_run_a_id=result.eval_run_a_id,
         eval_run_b_id=result.eval_run_b_id,
+        **extra,
     )
 
 
@@ -95,4 +118,5 @@ def get_diff_run(
         detail=diff.detail,
         eval_run_a_id=diff.eval_run_a_id,
         eval_run_b_id=diff.eval_run_b_id,
+        **_diff_context(diff, db),
     )

@@ -25,6 +25,10 @@ class ApiKey(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     key_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     role: Mapped[str] = mapped_column(String, nullable=False)
+    # Display-only metadata for the dashboard's masked key list (migration 0011).
+    # Nullable: keys minted before 0011 (CLI/scripts) have neither.
+    key_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_four: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

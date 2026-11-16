@@ -12,6 +12,9 @@ export function useCreateEvalRun(agentId: string | undefined) {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
+      void queryClient.invalidateQueries({ queryKey: ["runs"] });
+      void queryClient.invalidateQueries({ queryKey: ["agents"] });
+      void queryClient.invalidateQueries({ queryKey: ["summary"] });
     },
   });
 }

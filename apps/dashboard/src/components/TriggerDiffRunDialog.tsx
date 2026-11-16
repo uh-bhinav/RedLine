@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,19 +38,25 @@ export function TriggerDiffRunDialog({ agentId, versions }: TriggerDiffRunDialog
 
   async function handleTrigger() {
     if (!versionAId || !versionBId || !suiteId) return;
-    const diff = await createDiff.mutateAsync({
-      version_a_id: versionAId,
-      version_b_id: versionBId,
-      suite_id: suiteId,
-    });
+    let diff;
+    try {
+      diff = await createDiff.mutateAsync({
+        version_a_id: versionAId,
+        version_b_id: versionBId,
+        suite_id: suiteId,
+      });
+    } catch {
+      return; // error already surfaced via the global mutation toast + inline message
+    }
     setOpen(false);
+    toast.success("Diff run created");
     navigate(`/diffs/${diff.id}`);
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Compare Versions</Button>
+        <Button variant="outline">Diff</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

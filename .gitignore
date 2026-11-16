@@ -26,5 +26,10 @@ dist/
 # CLI local config
 .redline/
 
+# Local demo launcher state (pids, logs)
+.run/
+
 # Claude Code local settings (contains API keys and personal preferences)
 .claude/settings.local.json
+# Dashboard QA screenshots (local only)
+apps/dashboard/qa/

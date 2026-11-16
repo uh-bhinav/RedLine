@@ -68,6 +68,22 @@ def run_mining(
     return clusters
 
 
+@router.get("/{agent_id}/clusters", response_model=list[FailureClusterResponse])
+def list_clusters(
+    agent_id: uuid.UUID,
+    ctx: TenantContext = Depends(get_tenant_context),
+    db: Session = Depends(get_db),
+) -> list[FailureCluster]:
+    """Stored failure clusters for an agent (any role; mining itself is POST /run)."""
+    _owned_agent(agent_id, ctx.tenant_id, db)
+    return (
+        db.query(FailureCluster)
+        .filter(FailureCluster.agent_id == agent_id)
+        .order_by(FailureCluster.created_at.desc(), FailureCluster.cluster_label)
+        .all()
+    )
+
+
 @router.get("/candidates", response_model=list[CandidateCaseResponse])
 def list_candidates(
     agent_id: uuid.UUID = Query(...),

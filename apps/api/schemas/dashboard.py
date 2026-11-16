@@ -25,6 +25,93 @@ class AgentListItem(BaseModel):
     latest_version_label: str | None
     latest_run: AgentLatestRun | None
     created_at: datetime
+    # Latest ARSSnapshot.ars across all of the agent's versions (None = never scored).
+    latest_ars: float | None = None
+
+
+class DashboardSummary(BaseModel):
+    """Overview-page KPI tiles, tenant-scoped."""
+
+    total_agents: int
+    runs_last_7d: int
+    gate_pass_rate: float | None
+    healthy_budget_count: int
+    total_budget_count: int
+
+
+class ArsBreakdown(BaseModel):
+    ars: float
+    correctness: float
+    safety: float
+    latency: float
+    cost: float
+
+
+class RunListItem(BaseModel):
+    """One row in the cross-agent runs list."""
+
+    id: uuid.UUID
+    agent_id: uuid.UUID
+    agent_name: str
+    agent_version_id: uuid.UUID
+    version_label: str
+    suite_id: uuid.UUID
+    suite_name: str | None
+    status: str
+    triggered_by: str
+    gate_passed: bool | None
+    ars: float | None
+    error: str | None = None
+    created_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None
+
+
+class DiffListItem(BaseModel):
+    """One row in the cross-agent behavior diffs list."""
+
+    id: uuid.UUID
+    agent_id: uuid.UUID
+    agent_name: str
+    version_a_id: uuid.UUID
+    version_b_id: uuid.UUID
+    version_a_label: str | None
+    version_b_label: str | None
+    suite_id: uuid.UUID
+    suite_name: str | None
+    classification: str
+    code_changed: bool
+    behavior_changed: bool
+    mean_similarity: float
+    threshold: float
+    eval_run_a_id: uuid.UUID
+    eval_run_b_id: uuid.UUID
+    created_at: datetime
+
+
+class LoadRunListItem(BaseModel):
+    """One row in the cross-agent load runs list."""
+
+    id: uuid.UUID
+    agent_id: uuid.UUID
+    agent_name: str
+    agent_version_id: uuid.UUID
+    version_label: str
+    status: str
+    triggered_by: str
+    concurrency: int
+    duration_seconds: int
+    total_requests: int | None
+    p50_latency_ms: float | None
+    p95_latency_ms: float | None
+    p99_latency_ms: float | None
+    error_rate: float | None
+    throughput_rps: float | None
+    cost_per_hour_usd: float | None
+    error: str | None = None
+    created_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None
 
 
 class AgentVersionSummary(BaseModel):
@@ -89,6 +176,15 @@ class RunDetailResponse(BaseModel):
     completed_at: datetime | None
     error: str | None = None
     case_results: list[CaseResultItem]
+    # Additive run-context fields (all optional so old consumers are unaffected).
+    agent_id: uuid.UUID | None = None
+    agent_name: str | None = None
+    agent_version_id: uuid.UUID | None = None
+    version_label: str | None = None
+    suite_id: uuid.UUID | None = None
+    suite_name: str | None = None
+    created_at: datetime | None = None
+    ars: ArsBreakdown | None = None
 
 
 class ArsSnapshotItem(BaseModel):

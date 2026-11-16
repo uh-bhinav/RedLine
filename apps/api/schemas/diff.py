@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -26,3 +27,13 @@ class DiffRunResponse(BaseModel):
     # just not returned before this.
     eval_run_a_id: uuid.UUID
     eval_run_b_id: uuid.UUID
+    # Additive context (optional) so the diff viewer can label both sides.
+    agent_id: uuid.UUID | None = None
+    agent_name: str | None = None
+    version_a_id: uuid.UUID | None = None
+    version_b_id: uuid.UUID | None = None
+    version_a_label: str | None = None
+    version_b_label: str | None = None
+    suite_id: uuid.UUID | None = None
+    suite_name: str | None = None
+    created_at: datetime | None = None

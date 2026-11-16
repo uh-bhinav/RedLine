@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     # redpanda_bootstrap_servers.
     otel_exporter_endpoint: str = "http://localhost:4317"
 
+    # Per-credential API rate limit (requests per 60s window). Raised from the
+    # old hardcoded 100 because the dashboard polls several endpoints at once.
+    rate_limit_per_minute: int = 600
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()

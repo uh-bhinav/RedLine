@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,21 +38,27 @@ export function TriggerLoadRunDialog({ agentId, versions }: TriggerLoadRunDialog
 
   async function handleTrigger() {
     if (!versionId) return;
-    const run = await createLoadRun.mutateAsync({
-      agent_version_id: versionId,
-      message,
-      concurrency,
-      duration_seconds: durationSeconds,
-      triggered_by: "manual",
-    });
+    let run;
+    try {
+      run = await createLoadRun.mutateAsync({
+        agent_version_id: versionId,
+        message,
+        concurrency,
+        duration_seconds: durationSeconds,
+        triggered_by: "manual",
+      });
+    } catch {
+      return; // error already surfaced via the global mutation toast + inline message
+    }
     setOpen(false);
+    toast.success("Load test started");
     navigate(`/load-run/${run.id}`);
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Trigger Load Test</Button>
+        <Button variant="outline">Load</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -20,7 +20,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // some other local process answers on *:8000 over IPv6 with an unrelated
 // response). Same class of ambiguity .env.example already documents for
 // DATABASE_URL; pinning the literal IPv4 address sidesteps it here too.
-const API_TARGET = "http://127.0.0.1:8000";
+// Overridable via the API_TARGET env var (e.g. to point at another host/port);
+// the default is unchanged.
+const API_TARGET = process.env.API_TARGET ?? "http://127.0.0.1:8000";
 const PROXIED_PREFIXES = [
   "/dashboard",
   "/eval-runs",

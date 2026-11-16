@@ -39,21 +39,36 @@ class JudgeVerdict(BaseModel):
 
 class LLMJudgeScorer:
     def __init__(self):
-        settings = get_settings()
-        self._client = genai.Client(api_key=settings.gemini_api_key)
-        # Found while fixing the model hardcoding (Phase 3.5, "Bug 3"): this scorer
-        # made an unmetered LLM call on every case with a judge_rubric -- neither the
-        # per-minute window nor the Phase 3.3 daily quota applied to it. Since the
-        # judge is the LAST scorer per eval_engine ordering but still runs once per
-        # case, an eval suite using judge_rubric on most cases (the baseline rag-agent
-        # suite does) was spending daily quota the platform had no record of, which
-        # undermines the whole reason 3.3 exists.
-        self._limiter = get_limiter("high_reasoning")
+        # Client and limiter are created lazily (see _get_client) so importing or
+        # constructing the scorer never needs GEMINI_API_KEY or Redis.
+        self._client = None
+        self._limiter = None
+
+    def _get_client(self):
+        if self._client is None:
+            self._client = genai.Client(api_key=get_settings().gemini_api_key)
+        return self._client
+
+    def _get_limiter(self):
+        if self._limiter is None:
+            self._limiter = get_limiter("high_reasoning")
+        return self._limiter
+
+    # The limiter exists because (Phase 3.5, "Bug 3") this scorer once made an
+    # unmetered LLM call per judge_rubric case, bypassing the per-minute window
+    # and the Phase 3.3 daily quota.
 
     def score(self, case: EvalCase, transcript: list[Turn]) -> ScorerResult:
         rubric = case.expectations.get("judge_rubric")
         if not rubric:
             return ScorerResult(passed=True, detail="no judge_rubric configured")
+
+        # Fail closed: a rubric we cannot grade must not silently pass.
+        if not get_settings().gemini_api_key:
+            return ScorerResult(
+                passed=False,
+                detail="LLM judge unavailable: GEMINI_API_KEY is not set",
+            )
 
         transcript_text = "\n".join(f"{t.role}: {t.content}" for t in transcript)
         prompt = (
@@ -65,8 +80,8 @@ class LLMJudgeScorer:
             "Does this conversation satisfy the rubric?"
         )
 
-        self._limiter.acquire()
-        response = self._client.models.generate_content(
+        self._get_limiter().acquire()
+        response = self._get_client().models.generate_content(
             model=_JUDGE_PROFILE.chat_model,
             contents=prompt,
             config=types.GenerateContentConfig(

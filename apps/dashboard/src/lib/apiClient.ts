@@ -139,14 +139,22 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
       },
     });
 
-  let res = await doFetch(accessToken);
-
-  if (res.status === 401) {
+  const refreshOnce = () => {
     refreshPromise ??= doRefresh().finally(() => {
       refreshPromise = null;
     });
-    const newToken = await refreshPromise;
-    res = await doFetch(newToken);
+    return refreshPromise;
+  };
+
+  // No in-memory access token (fresh page load) but a refresh token exists:
+  // refresh FIRST (single-flight) so we never fire a request we know will 401.
+  let token = accessToken;
+  if (!token && getRefreshToken()) token = await refreshOnce();
+
+  let res = await doFetch(token);
+
+  if (res.status === 401) {
+    res = await doFetch(await refreshOnce());
   }
 
   if (res.status === 401) throw new AuthRequiredError();

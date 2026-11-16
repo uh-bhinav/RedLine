@@ -25,7 +25,10 @@ def health_check():
         conn.execute(text("SELECT 1"))
     return {"status": "ok", "service": "redline-api"}
 
-_rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
+from apps.api.core.config import get_settings as _get_settings
+
+_RATE_LIMIT = _get_settings().rate_limit_per_minute
+_rate_limiter = RateLimiter(max_requests=_RATE_LIMIT, window_seconds=60)
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
@@ -47,7 +50,7 @@ async def rate_limit_middleware(request: Request, call_next):
     if not _rate_limiter.is_allowed(tenant_proxy_id):
         return JSONResponse(
             status_code=429,
-            content={"detail": "rate limit exceeded -- 100 requests per 60 seconds"},
+            content={"detail": f"rate limit exceeded -- {_RATE_LIMIT} requests per 60 seconds"},
             headers={"Retry-After": "60"},
         )
     return await call_next(request)

@@ -36,6 +36,17 @@ export default {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        brand: {
+          DEFAULT: "hsl(var(--brand))",
+          foreground: "hsl(var(--brand-foreground))",
+        },
+        "gate-pass": "hsl(var(--gate-pass))",
+        "gate-fail": "hsl(var(--gate-fail))",
+        "gate-pending": "hsl(var(--gate-pending))",
+        "diff-silent-drift": "hsl(var(--diff-silent-drift))",
+        "diff-safe-refactor": "hsl(var(--diff-safe-refactor))",
+        "diff-expected": "hsl(var(--diff-expected))",
+        "diff-noop": "hsl(var(--diff-noop))",
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -44,6 +55,10 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+      },
+      fontFamily: {
+        sans: ['"IBM Plex Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

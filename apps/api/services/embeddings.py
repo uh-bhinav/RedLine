@@ -22,8 +22,35 @@ from apps.api.core.model_profiles import get_profile
 EMBEDDING_PROFILE_NAME = "standard"
 
 
+def _has_real_gemini_key(key: str) -> bool:
+    return bool(key) and not key.lower().startswith("placeholder")
+
+
+def _local_embed(texts: list[str], dims: int = 256) -> list[list[float]]:
+    """Deterministic hashed bag-of-words embedding, L2-normalised.
+
+    Used ONLY when no real Gemini key is configured (demo / offline). It is not semantic:
+    it measures lexical overlap, so identical texts score 1.0 and unrelated texts score low.
+    """
+    import hashlib
+    import math
+    import re
+
+    vectors: list[list[float]] = []
+    for text in texts:
+        vec = [0.0] * dims
+        for token in re.findall(r"[a-z0-9]+", text.lower()):
+            bucket = int(hashlib.md5(token.encode()).hexdigest(), 16) % dims  # noqa: S324 (not security)
+            vec[bucket] += 1.0
+        norm = math.sqrt(sum(v * v for v in vec)) or 1.0
+        vectors.append([v / norm for v in vec])
+    return vectors
+
+
 def embed_texts(texts: list[str]) -> list[list[float]]:
     settings = get_settings()
+    if not _has_real_gemini_key(settings.gemini_api_key):
+        return _local_embed(texts)
     client = genai.Client(api_key=settings.gemini_api_key)
     # for_embedding=True: this is genuinely a different model (embedding_model,
     # not chat_model) with its own provider-side quota. Without this flag,

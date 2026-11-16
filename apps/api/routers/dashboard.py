@@ -13,9 +13,12 @@ Phase 3 Section 1 closes that:
     so a valid credential for tenant A cannot read tenant B's run by guessing a UUID
 """
 import dataclasses
+import logging
 import uuid
+from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from apps.api.core.clickhouse_client import get_clickhouse
@@ -30,20 +33,27 @@ from apps.api.models import (
     EvalCase,
     EvalCaseResult,
     EvalRun,
+    EvalSuite,
     LoadRun,
+    SLOPolicy,
 )
 from apps.api.schemas.dashboard import (
     AgentDetailResponse,
     AgentLatestRun,
     AgentListItem,
     AgentVersionSummary,
+    ArsBreakdown,
     ArsSnapshotItem,
     CaseResultItem,
+    DashboardSummary,
+    DiffListItem,
     DriftAlertItem,
     ErrorBudgetResponse,
     EvalRunSummary,
+    LoadRunListItem,
     LoadRunSummary,
     RunDetailResponse,
+    RunListItem,
     TraceEventItem,
 )
 from apps.api.services import ars_engine
@@ -51,6 +61,45 @@ from apps.api.services.adapters.chaos_adapter import has_chaos_marker
 from apps.api.services.gate_engine import evaluate
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+logger = logging.getLogger(__name__)
+
+_GATE_RATE_RUN_CAP = 200  # bound evaluate() calls (3 queries each) for the summary
+
+
+def _latest_ars_by_agent(db: Session, agent_ids: list[uuid.UUID]) -> dict[uuid.UUID, float]:
+    """Latest ARSSnapshot.ars per agent across all its versions, in one query."""
+    if not agent_ids:
+        return {}
+    rows = (
+        db.query(AgentVersion.agent_id, ARSSnapshot.ars)
+        .join(ARSSnapshot, ARSSnapshot.agent_version_id == AgentVersion.id)
+        .filter(AgentVersion.agent_id.in_(agent_ids))
+        .distinct(AgentVersion.agent_id)
+        .order_by(AgentVersion.agent_id, ARSSnapshot.created_at.desc())
+        .all()
+    )
+    return {agent_id: ars for agent_id, ars in rows}
+
+
+def _version_context(db: Session, version_ids: set[uuid.UUID]) -> dict:
+    """version_id -> (AgentVersion, Agent name) in one join query."""
+    if not version_ids:
+        return {}
+    rows = (
+        db.query(AgentVersion, Agent.name)
+        .join(Agent, Agent.id == AgentVersion.agent_id)
+        .filter(AgentVersion.id.in_(version_ids))
+        .all()
+    )
+    return {v.id: (v, name) for v, name in rows}
+
+
+def _suite_names(db: Session, suite_ids: set[uuid.UUID]) -> dict[uuid.UUID, str]:
+    if not suite_ids:
+        return {}
+    return {
+        s.id: s.name for s in db.query(EvalSuite).filter(EvalSuite.id.in_(suite_ids)).all()
+    }
 
 
 def _owned_agent(agent_id: uuid.UUID, tenant_id: uuid.UUID, db: Session) -> Agent:
@@ -77,6 +126,7 @@ def list_agents(
         .all()
     )
     result = []
+    latest_ars = _latest_ars_by_agent(db, [a.id for a in agents])
 
     for agent in agents:
         latest_version = (
@@ -115,9 +165,237 @@ def list_agents(
             latest_version_label=latest_version.version_label if latest_version else None,
             latest_run=latest_run_summary,
             created_at=agent.created_at,
+            latest_ars=latest_ars.get(agent.id),
         ))
 
     return result
+
+
+@router.get("/summary", response_model=DashboardSummary)
+def dashboard_summary(
+    ctx: TenantContext = Depends(get_tenant_context),
+    db: Session = Depends(get_db),
+) -> DashboardSummary:
+    now = datetime.now(timezone.utc)
+    agent_ids = [
+        a_id for (a_id,) in db.query(Agent.id).filter(Agent.tenant_id == ctx.tenant_id)
+    ]
+
+    week_ago = now - timedelta(days=7)
+    runs_last_7d = (
+        db.query(func.count(EvalRun.id))
+        .filter(EvalRun.tenant_id == ctx.tenant_id, EvalRun.created_at >= week_ago)
+        .scalar()
+    ) or 0
+
+    completed_ids = [
+        r_id for (r_id,) in (
+            db.query(EvalRun.id)
+            .filter(
+                EvalRun.tenant_id == ctx.tenant_id,
+                EvalRun.status == "completed",
+                EvalRun.created_at >= week_ago,
+            )
+            .order_by(EvalRun.created_at.desc())
+            .limit(_GATE_RATE_RUN_CAP)
+        )
+    ]
+    gate_pass_rate = None
+    if completed_ids:
+        passed = sum(1 for r_id in completed_ids if evaluate(r_id).passed)
+        gate_pass_rate = passed / len(completed_ids)
+
+    # Error budgets: same notion as /agents/{id}/error-budget (compute_error_budget over
+    # the agent's ARS snapshots inside its SLO window), but with two queries total
+    # instead of two per agent.
+    healthy = 0
+    if agent_ids:
+        policies = {
+            p.agent_id: p
+            for p in db.query(SLOPolicy).filter(SLOPolicy.agent_id.in_(agent_ids)).all()
+        }
+        max_window = max(
+            [p.window_days for p in policies.values()] + [ars_engine.DEFAULT_WINDOW_DAYS]
+        )
+        snaps = (
+            db.query(AgentVersion.agent_id, ARSSnapshot.ars, ARSSnapshot.created_at)
+            .join(ARSSnapshot, ARSSnapshot.agent_version_id == AgentVersion.id)
+            .filter(
+                AgentVersion.agent_id.in_(agent_ids),
+                ARSSnapshot.created_at >= now - timedelta(days=max_window),
+            )
+            .all()
+        )
+        by_agent: dict[uuid.UUID, list[tuple[datetime, float]]] = {}
+        for a_id, ars, created in snaps:
+            by_agent.setdefault(a_id, []).append((created, ars))
+
+        for a_id in agent_ids:
+            pol = policies.get(a_id)
+            window = pol.window_days if pol else ars_engine.DEFAULT_WINDOW_DAYS
+            cutoff = now - timedelta(days=window)
+            scores = [s for c, s in sorted(by_agent.get(a_id, [])) if c >= cutoff]
+            budget = ars_engine.compute_error_budget(
+                scores,
+                pol.target_ars if pol else ars_engine.DEFAULT_TARGET_ARS,
+                pol.error_budget_pct if pol else ars_engine.DEFAULT_ERROR_BUDGET_PCT,
+            )
+            if not budget.exhausted:
+                healthy += 1
+
+    return DashboardSummary(
+        total_agents=len(agent_ids),
+        runs_last_7d=runs_last_7d,
+        gate_pass_rate=gate_pass_rate,
+        healthy_budget_count=healthy,
+        total_budget_count=len(agent_ids),
+    )
+
+
+@router.get("/runs", response_model=list[RunListItem])
+def list_runs(
+    agent_id: uuid.UUID | None = Query(None),
+    status: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    ctx: TenantContext = Depends(get_tenant_context),
+    db: Session = Depends(get_db),
+) -> list[RunListItem]:
+    q = db.query(EvalRun).filter(EvalRun.tenant_id == ctx.tenant_id)
+    if agent_id is not None:
+        q = q.filter(
+            EvalRun.agent_version_id.in_(
+                db.query(AgentVersion.id)
+                .join(Agent, Agent.id == AgentVersion.agent_id)
+                .filter(AgentVersion.agent_id == agent_id, Agent.tenant_id == ctx.tenant_id)
+            )
+        )
+    if status is not None:
+        q = q.filter(EvalRun.status == status)
+    runs = q.order_by(EvalRun.created_at.desc()).limit(limit).all()
+
+    vctx = _version_context(db, {r.agent_version_id for r in runs})
+    suites = _suite_names(db, {r.suite_id for r in runs})
+    ars_by_run = {
+        s.eval_run_id: s.ars
+        for s in db.query(ARSSnapshot)
+        .filter(ARSSnapshot.eval_run_id.in_([r.id for r in runs]))
+        .all()
+    } if runs else {}
+
+    items = []
+    for r in runs:
+        version, agent_name = vctx[r.agent_version_id]
+        gate = evaluate(r.id) if r.status == "completed" else None
+        items.append(RunListItem(
+            id=r.id,
+            agent_id=version.agent_id,
+            agent_name=agent_name,
+            agent_version_id=r.agent_version_id,
+            version_label=version.version_label,
+            suite_id=r.suite_id,
+            suite_name=suites.get(r.suite_id),
+            status=r.status,
+            triggered_by=r.triggered_by,
+            gate_passed=gate.passed if gate else None,
+            ars=ars_by_run.get(r.id),
+            error=r.error,
+            created_at=r.created_at,
+            started_at=r.started_at,
+            completed_at=r.completed_at,
+        ))
+    return items
+
+
+@router.get("/diffs", response_model=list[DiffListItem])
+def list_diffs(
+    agent_id: uuid.UUID | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    ctx: TenantContext = Depends(get_tenant_context),
+    db: Session = Depends(get_db),
+) -> list[DiffListItem]:
+    q = (
+        db.query(BehaviorDiff, Agent.name)
+        .join(Agent, Agent.id == BehaviorDiff.agent_id)
+        .filter(Agent.tenant_id == ctx.tenant_id)
+    )
+    if agent_id is not None:
+        q = q.filter(BehaviorDiff.agent_id == agent_id)
+    rows = q.order_by(BehaviorDiff.created_at.desc()).limit(limit).all()
+
+    version_ids = {d.version_a_id for d, _ in rows} | {d.version_b_id for d, _ in rows}
+    vctx = _version_context(db, version_ids)
+    suites = _suite_names(db, {d.suite_id for d, _ in rows})
+
+    def label(vid: uuid.UUID) -> str | None:
+        return vctx[vid][0].version_label if vid in vctx else None
+
+    return [
+        DiffListItem(
+            id=d.id,
+            agent_id=d.agent_id,
+            agent_name=agent_name,
+            version_a_id=d.version_a_id,
+            version_b_id=d.version_b_id,
+            version_a_label=label(d.version_a_id),
+            version_b_label=label(d.version_b_id),
+            suite_id=d.suite_id,
+            suite_name=suites.get(d.suite_id),
+            classification=d.classification,
+            code_changed=d.code_changed,
+            behavior_changed=d.behavior_changed,
+            mean_similarity=d.mean_similarity,
+            threshold=d.similarity_threshold,
+            eval_run_a_id=d.eval_run_a_id,
+            eval_run_b_id=d.eval_run_b_id,
+            created_at=d.created_at,
+        )
+        for d, agent_name in rows
+    ]
+
+
+@router.get("/load-runs", response_model=list[LoadRunListItem])
+def list_load_runs(
+    agent_id: uuid.UUID | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    ctx: TenantContext = Depends(get_tenant_context),
+    db: Session = Depends(get_db),
+) -> list[LoadRunListItem]:
+    q = db.query(LoadRun).filter(LoadRun.tenant_id == ctx.tenant_id)
+    if agent_id is not None:
+        q = q.filter(
+            LoadRun.agent_version_id.in_(
+                db.query(AgentVersion.id).filter(AgentVersion.agent_id == agent_id)
+            )
+        )
+    runs = q.order_by(LoadRun.created_at.desc()).limit(limit).all()
+    vctx = _version_context(db, {r.agent_version_id for r in runs})
+
+    items = []
+    for r in runs:
+        version, agent_name = vctx[r.agent_version_id]
+        items.append(LoadRunListItem(
+            id=r.id,
+            agent_id=version.agent_id,
+            agent_name=agent_name,
+            agent_version_id=r.agent_version_id,
+            version_label=version.version_label,
+            status=r.status,
+            triggered_by=r.triggered_by,
+            concurrency=r.concurrency,
+            duration_seconds=r.duration_seconds,
+            total_requests=r.total_requests,
+            p50_latency_ms=r.p50_latency_ms,
+            p95_latency_ms=r.p95_latency_ms,
+            p99_latency_ms=r.p99_latency_ms,
+            error_rate=r.error_rate,
+            throughput_rps=r.throughput_rps,
+            cost_per_hour_usd=r.cost_per_hour_usd,
+            error=r.error,
+            created_at=r.created_at,
+            started_at=r.started_at,
+            completed_at=r.completed_at,
+        ))
+    return items
 
 
 @router.get("/agents/{agent_id}", response_model=AgentDetailResponse)
@@ -203,6 +481,11 @@ def run_detail(
             ),
         ))
 
+    vctx = _version_context(db, {run.agent_version_id})
+    version, agent_name = vctx.get(run.agent_version_id, (None, None))
+    suite = db.get(EvalSuite, run.suite_id)
+    snap = db.query(ARSSnapshot).filter(ARSSnapshot.eval_run_id == run.id).first()
+
     return RunDetailResponse(
         id=run.id,
         status=run.status,
@@ -212,6 +495,17 @@ def run_detail(
         completed_at=run.completed_at,
         error=run.error,
         case_results=case_results,
+        agent_id=version.agent_id if version else None,
+        agent_name=agent_name,
+        agent_version_id=run.agent_version_id,
+        version_label=version.version_label if version else None,
+        suite_id=run.suite_id,
+        suite_name=suite.name if suite else None,
+        created_at=run.created_at,
+        ars=ArsBreakdown(
+            ars=snap.ars, correctness=snap.correctness, safety=snap.safety,
+            latency=snap.latency, cost=snap.cost,
+        ) if snap else None,
     )
 
 
@@ -374,16 +668,22 @@ def run_traces(
     if run is None or run.tenant_id != ctx.tenant_id:
         raise HTTPException(status_code=404, detail="eval run not found")
 
-    ch = get_clickhouse()
-    rows = ch.execute(
-        """
-        SELECT trace_id, event_type, case_key, turn_index, latency_ms, cost_usd, passed, detail, created_at
-        FROM traces
-        WHERE eval_run_id = %(eval_run_id)s AND tenant_id = %(tenant_id)s
-        ORDER BY created_at ASC
-        """,
-        {"eval_run_id": eval_run_id, "tenant_id": ctx.tenant_id},
-    )
+    # ClickHouse is an analytics store (architecture rule #4): if it is down or
+    # the table is missing, the traces tab shows empty rather than a 500.
+    try:
+        ch = get_clickhouse()
+        rows = ch.execute(
+            """
+            SELECT trace_id, event_type, case_key, turn_index, latency_ms, cost_usd, passed, detail, created_at
+            FROM traces
+            WHERE eval_run_id = %(eval_run_id)s AND tenant_id = %(tenant_id)s
+            ORDER BY created_at ASC
+            """,
+            {"eval_run_id": eval_run_id, "tenant_id": ctx.tenant_id},
+        )
+    except Exception as e:
+        logger.warning("ClickHouse trace read failed (returning empty): %s", e)
+        return []
 
     return [
         TraceEventItem(

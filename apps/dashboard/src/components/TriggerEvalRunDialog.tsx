@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,19 +37,25 @@ export function TriggerEvalRunDialog({ agentId, versions }: TriggerEvalRunDialog
 
   async function handleTrigger() {
     if (!versionId || !suiteId) return;
-    const run = await createRun.mutateAsync({
-      agent_version_id: versionId,
-      suite_id: suiteId,
-      triggered_by: "manual",
-    });
+    let run;
+    try {
+      run = await createRun.mutateAsync({
+        agent_version_id: versionId,
+        suite_id: suiteId,
+        triggered_by: "manual",
+      });
+    } catch {
+      return; // error already surfaced via the global mutation toast + inline message
+    }
     setOpen(false);
+    toast.success("Eval run started - navigating to run detail");
     navigate(`/runs/${run.id}`);
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Trigger Eval Run</Button>
+        <Button>Run Eval</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
